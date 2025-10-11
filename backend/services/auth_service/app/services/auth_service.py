@@ -24,15 +24,21 @@ class AuthService:
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         """Vérifie si le mot de passe correspond au hash"""
-        return pwd_context.verify(plain_password, hashed_password)
+        # Truncate to bcrypt's 72 byte limit (work on UTF-8 bytes)
+        if not isinstance(plain_password, str):
+            plain_password = str(plain_password)
+        truncated = plain_password.encode("utf-8", errors="ignore")[:72].decode("utf-8", errors="ignore")
+        return pwd_context.verify(truncated, hashed_password)
 
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Hash un mot de passe"""
-        # Ensure password doesn't exceed bcrypt's 72 byte limit
-        if len(password.encode('utf-8')) > 72:
-            password = password[:72]
-        return pwd_context.hash(password)
+        # Ensure password doesn't exceed bcrypt's 72 byte limit by truncating
+        # on UTF-8 encoded bytes (bcrypt truncates to 72 bytes)
+        if not isinstance(password, str):
+            password = str(password)
+        truncated = password.encode("utf-8", errors="ignore")[:72].decode("utf-8", errors="ignore")
+        return pwd_context.hash(truncated)
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Récupère un utilisateur par son email"""
