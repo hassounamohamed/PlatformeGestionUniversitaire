@@ -16,7 +16,7 @@ def create_all():
     print("Creating database tables...")
     # import models so they register themselves on Base.metadata
     try:
-        from app.models import departement, matiere, enseignant, etudiant  # noqa: F401
+        from app.models import departement, matiere, enseignant, etudiant, salle  # noqa: F401
     except Exception:
         # best-effort: continue if models import fails, create_all will reflect what's registered
         pass

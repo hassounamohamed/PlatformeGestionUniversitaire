@@ -6,6 +6,7 @@ from app.schemas.departement import DepartementCreate, DepartementRead
 from app.crud.departement_crud import get_departement, get_departements, create_departement, delete_departement, update_departement
 from app.core.database import get_db
 from app.models.departement import Departement
+from app.core.admin import admin_required
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ def list_departements(skip: int = 0, limit: int = 100, db: Session = Depends(get
 
 
 @router.post("/", response_model=DepartementRead)
-def create(d: DepartementCreate, db: Session = Depends(get_db)):
+def create(d: DepartementCreate, db: Session = Depends(get_db), _=Depends(admin_required)):
     # simple uniqueness check by name
     existing = db.query(Departement).filter(Departement.nom == d.nom).first()
     if existing:

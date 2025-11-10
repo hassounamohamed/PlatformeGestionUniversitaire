@@ -1,0 +1,1 @@
+# absence_service package
