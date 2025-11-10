@@ -1,61 +1,83 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { ApiService } from '../../../core/services/api.service';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private apiUrl = '/api/admin';
+  constructor(private api: ApiService) {}
 
-  constructor(private http: HttpClient) {}
+  private mapResourceToPath(resource: string): string {
+    switch (resource) {
+      case 'departments':
+        return '/departements';
+      case 'teachers':
+        return '/enseignants';
+      case 'specialties':
+        return '/specialites';
+      case 'students':
+        return '/etudiants';
+      case 'rooms':
+        return '/salles';
+      case 'subjects':
+        return '/matieres';
+      case 'events':
+        return '/events';
+      case 'emplois':
+        return '/emplois';
+      case 'analytics':
+        return '/analytics';
+      default:
+        // assume resource is already an API path
+        return `/${resource}`;
+    }
+  }
 
   async list(resource: string): Promise<any[]> {
-    // simple mock for events to keep UI functional during dev
-    if (resource === 'events') {
-      return Promise.resolve([
-        { id: '1', title: 'Rentrée universitaire', date: '2025-09-01' },
-        { id: '2', title: 'Journée portes ouvertes', date: '2025-11-15' }
-      ]);
-    }
+    const path = this.mapResourceToPath(resource);
     try {
-      return await lastValueFrom(this.http.get<any[]>(`${this.apiUrl}/${resource}`));
+      return await firstValueFrom(this.api.get<any[]>(path));
     } catch (e) {
+      console.warn('AdminService.list failed', resource, e);
       return [];
     }
   }
 
   async get(resource: string, id: string): Promise<any | null> {
+    const path = `${this.mapResourceToPath(resource)}/${id}`;
     try {
-      return await lastValueFrom(this.http.get<any>(`${this.apiUrl}/${resource}/${id}`));
+      return await firstValueFrom(this.api.get<any>(path));
     } catch (e) {
       return null;
     }
   }
 
   async create(resource: string, payload: any): Promise<any | null> {
-    if (resource === 'events') return Promise.resolve({ id: Date.now().toString(), ...payload });
+    const path = this.mapResourceToPath(resource);
     try {
-      return await lastValueFrom(this.http.post<any>(`${this.apiUrl}/${resource}`, payload));
+      return await firstValueFrom(this.api.post<any>(path, payload));
     } catch (e) {
+      console.warn('AdminService.create failed', resource, e);
       return null;
     }
   }
 
   async update(resource: string, id: string, payload: any): Promise<any | null> {
+    const path = `${this.mapResourceToPath(resource)}/${id}`;
     try {
-      return await lastValueFrom(this.http.put<any>(`${this.apiUrl}/${resource}/${id}`, payload));
+      return await firstValueFrom(this.api.put<any>(path, payload));
     } catch (e) {
+      console.warn('AdminService.update failed', resource, e);
       return null;
     }
   }
 
-  // Accept undefined id to match component usage where id may be optional
   async remove(resource: string, id?: string): Promise<void> {
     if (!id) return;
-    if (resource === 'events') return Promise.resolve();
+    const path = `${this.mapResourceToPath(resource)}/${id}`;
     try {
-      await lastValueFrom(this.http.delete<void>(`${this.apiUrl}/${resource}/${id}`));
+      await firstValueFrom(this.api.delete<void>(path));
     } catch (e) {
-      // swallow errors for now (UI uses optimistic UX)
+      console.warn('AdminService.remove failed', resource, e);
     }
   }
 }

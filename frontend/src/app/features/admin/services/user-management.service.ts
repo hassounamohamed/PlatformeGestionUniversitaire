@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User, UserRole } from '../../../core/models/user.model';
+import { BASE_API } from '../../../app.api';
 
 export interface CreateUserRequest {
   name: string;
@@ -28,7 +29,7 @@ export interface UsersListResponse {
   providedIn: 'root'
 })
 export class UserManagementService {
-  private readonly API_URL = '/api/admin/users';
+  private readonly API_URL = `${BASE_API}/admin/users`;
 
   constructor(private http: HttpClient) {}
 

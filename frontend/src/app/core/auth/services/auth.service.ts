@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { User, UserRole, LoginRequest, RegisterRequest, AuthResponse } from '../../models/user.model';
+import { BASE_API } from '../../../app.api';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Point to the local auth service. If you run through the API gateway change to '/api/auth'
-  private readonly API_URL = 'http://localhost:8000/api/auth'; // Adjust if you run the gateway or a different port
+  // Point to the auth endpoint via centralized base. Use '/api' so proxy can forward to backend.
+  private readonly API_URL = `${BASE_API}/auth`;
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
 
@@ -127,7 +128,8 @@ export class AuthService {
    */
   private normalizeRole(rawRole: string | undefined): any {
     if (!rawRole) return 'student';
-    const r = String(rawRole).toLowerCase();
+    // Normalize common variants: replace spaces with underscore and lowercase
+    const r = String(rawRole).toLowerCase().replace(/\s+/g, '_');
     switch (r) {
       case 'etudiant':
       case 'student':
@@ -137,6 +139,11 @@ export class AuthService {
         return 'teacher';
       case 'directeur':
       case 'director':
+      case 'chef_de_departement':
+      case 'chef_departement':
+      case 'chef_de_dept':
+      case 'chef':
+        // Treat department head as director-level for routing purposes
         return 'director';
       case 'admin':
       case 'administrator':

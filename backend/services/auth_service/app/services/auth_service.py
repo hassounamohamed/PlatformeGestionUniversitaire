@@ -102,13 +102,18 @@ class AuthService:
     async def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """Authentifie un utilisateur"""
         user = await self.get_user_by_email(email)
-
         if not user:
+            # Log at debug level to help troubleshooting failed logins without exposing passwords
+            self.logger.debug("authenticate_user: user not found for email=%s", email)
             return None
 
-        if not self.verify_password(password, user.hashed_password):
+        password_ok = self.verify_password(password, user.hashed_password)
+        if not password_ok:
+            # Log failed password attempt (do NOT log the provided password)
+            self.logger.info("authenticate_user: invalid password for email=%s", email)
             return None
 
+        self.logger.info("authenticate_user: success for email=%s", email)
         return user
 
     @staticmethod

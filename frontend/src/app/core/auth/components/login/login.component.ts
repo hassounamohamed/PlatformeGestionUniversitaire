@@ -52,7 +52,8 @@ export class LoginComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || 'Invalid email or password';
+          // Backend returns error detail in `detail` (FastAPI) or `message` in other cases
+          this.errorMessage = error.error?.detail || error.error?.message || 'Invalid email or password';
           this.isLoading = false;
         }
       });

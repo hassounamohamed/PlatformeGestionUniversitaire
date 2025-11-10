@@ -11,6 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
+import { AbsenceService, AbsenceDto } from '../../../../core/services/absence.service';
+import { AuthService } from '../../../../core/auth/services/auth.service';
 
 interface Course {
   id: string;
@@ -90,68 +92,11 @@ export class AbsencesComponent implements OnInit {
     }
   ];
 
-  myAbsences: Absence[] = [
-    {
-      id: '1',
-      date: new Date('2025-10-08'),
-      startTime: '08:30',
-      endTime: '10:00',
-      course: 'Mathématiques Appliquées - L2 Info A',
-      reason: 'medical',
-      comment: 'Consultation médicale urgente',
-      status: 'approved',
-      hasJustification: true
-    },
-    {
-      id: '2',
-      date: new Date('2025-10-10'),
-      startTime: '14:00',
-      endTime: '15:30',
-      course: 'Base de Données - L2 Info A',
-      reason: 'transport',
-      comment: 'Panne de voiture',
-      status: 'pending'
-    }
-  ];
+  myAbsences: Absence[] = [];
 
-  pendingStudentAbsences: StudentAbsence[] = [
-    {
-      id: '1',
-      studentName: 'Ahmed Ben Ali',
-      date: new Date('2025-10-09'),
-      startTime: '08:30',
-      endTime: '10:00',
-      course: 'Mathématiques Appliquées - L2 Info A',
-      reason: 'medical',
-      comment: 'Rendez-vous médical',
-      status: 'pending',
-      hasJustification: true
-    },
-    {
-      id: '2',
-      studentName: 'Fatma Gharbi',
-      date: new Date('2025-10-10'),
-      startTime: '10:15',
-      endTime: '11:45',
-      course: 'Algorithmique - L1 Info B',
-      reason: 'family',
-      comment: 'Événement familial important',
-      status: 'pending',
-      hasJustification: false
-    },
-    {
-      id: '3',
-      studentName: 'Mohamed Triki',
-      date: new Date('2025-10-11'),
-      startTime: '14:00',
-      endTime: '15:30',
-      course: 'Base de Données - L2 Info A',
-      reason: 'transport',
-      status: 'pending'
-    }
-  ];
+  pendingStudentAbsences: StudentAbsence[] = [];
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private absenceService: AbsenceService, private auth: AuthService) {
     this.absenceForm = this.fb.group({
       date: ['', Validators.required],
       startTime: ['', Validators.required],
@@ -163,7 +108,31 @@ export class AbsencesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load initial data
+    this.loadAbsences();
+  }
+
+  private loadAbsences(): void {
+    this.absenceService.listAbsences().subscribe({
+      next: (res: AbsenceDto[]) => {
+        // teacher sees own absences + pending student absences (filter by statut)
+        this.myAbsences = [];
+        this.pendingStudentAbsences = res
+          .filter(r => (r.statut || '').toLowerCase() === 'pending')
+          .map(r => ({
+            id: String(r.id),
+            studentName: `student-${r.etudiant_id}`,
+            date: new Date(),
+            startTime: '',
+            endTime: '',
+            course: '',
+            reason: r.motif || '',
+            comment: '',
+            status: 'pending',
+            hasJustification: false
+          } as StudentAbsence));
+      },
+      error: (err: any) => console.error('Failed loading absences for teacher', err)
+    });
   }
 
   onTabChange(event: any): void {
