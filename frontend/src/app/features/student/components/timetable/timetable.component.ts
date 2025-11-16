@@ -34,12 +34,12 @@ export class TimetableComponent implements OnInit {
 
   days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
-  timeSlots = ['08:30', '10:15', '12:00', '14:00', '15:45'];
+  timeSlots = ['08:30', '10:10', '11:50', '14:30', '16:10'];
 
   courses: Course[] = [
     { id: 's1', subject: 'Programmation Web', teacher: 'Dr. Sami', room: '201', type: 'lecture', day: 'Lundi', startTime: '08:30', endTime: '10:00' },
-    { id: 's2', subject: 'Base de Donn\u00e9es', teacher: 'Mme. Leila', room: '103', type: 'tp', day: 'Mardi', startTime: '14:00', endTime: '15:30' },
-    { id: 's3', subject: 'Math\u00e9matiques Appliqu\u00e9es', teacher: 'Mr. Hassen', room: '101', type: 'td', day: 'Jeudi', startTime: '10:15', endTime: '11:45' }
+    { id: 's2', subject: 'Base de Donn\u00e9es', teacher: 'Mme. Leila', room: '103', type: 'tp', day: 'Mardi', startTime: '14:30', endTime: '16:00' },
+    { id: 's3', subject: 'Math\u00e9matiques Appliqu\u00e9es', teacher: 'Mr. Hassen', room: '101', type: 'td', day: 'Jeudi', startTime: '10:10', endTime: '11:40' }
   ];
 
   ngOnInit(): void {

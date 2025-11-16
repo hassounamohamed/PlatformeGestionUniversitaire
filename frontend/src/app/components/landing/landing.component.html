@@ -111,7 +111,7 @@
 
           <div class="upcoming-list">
             <div class="upcoming-title">Prochains événements</div>
-            <div *ngIf="(upcomingEvents?.length || 0) === 0" class="no-events">Aucun événement prévu.</div>
+            <div *ngIf="(upcomingEvents.length || 0) === 0" class="no-events">Aucun événement prévu.</div>
             <!-- 4️⃣ ÉVÉNEMENTS AVEC BADGES ET CLIQUABLES -->
             <div class="event-item clickable-event" 
                  *ngFor="let ev of (upcomingEvents || []) | slice:0:6"
@@ -120,7 +120,7 @@
               <div class="ev-info">
                 <div class="ev-title">
                   {{ ev.title }}
-                  <span class="event-badge" [class]="getEventType(ev.title)">{{ getEventType(ev.title) }}</span>
+                  <span [ngClass]="['event-badge', ev.type || getEventType(ev.title)]">{{ eventTypeLabel(ev.type || getEventType(ev.title)) }}</span>
                 </div>
                 <div class="ev-desc">{{ ev.location }}</div>
               </div>

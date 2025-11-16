@@ -3,6 +3,9 @@ import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard
 import { GlobalReferentialsComponent } from './components/global-referentials/global-referentials.component';
 import { EventsManagementComponent } from './components/events-management/events-management.component';
 import { ReportsComponent } from './components/reports/reports.component';
+import { TimetablesManagementComponent } from './components/timetables-management/timetables-management.component';
+import { ConflictsManagementComponent } from './components/conflicts-management/conflicts-management.component';
+import { AccountsManagementComponent } from './components/accounts-management/accounts-management.component';
 
 export const adminRoutes: Routes = [
   {
@@ -23,14 +26,18 @@ export const adminRoutes: Routes = [
   },
   {
     path: 'timetables',
-    component: AdminDashboardComponent // placeholder - create separate component later
+    component: TimetablesManagementComponent
   },
   {
     path: 'conflicts',
-    component: AdminDashboardComponent // placeholder - create separate component later
+    component: ConflictsManagementComponent
+  },
+  {
+    path: 'accounts',
+    component: AccountsManagementComponent
   },
   {
     path: 'settings',
-    component: AdminDashboardComponent // placeholder - create separate component later
+    component: AdminDashboardComponent
   }
 ];

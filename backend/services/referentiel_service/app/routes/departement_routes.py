@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.schemas.departement import DepartementCreate, DepartementRead
+from fastapi import Body
 from app.crud.departement_crud import get_departement, get_departements, create_departement, delete_departement, update_departement
 from app.core.database import get_db
 from app.models.departement import Departement
@@ -17,11 +18,16 @@ def list_departements(skip: int = 0, limit: int = 100, db: Session = Depends(get
 
 
 @router.post("/", response_model=DepartementRead)
-def create(d: DepartementCreate, db: Session = Depends(get_db), _=Depends(admin_required)):
+def create(payload: dict = Body(...), db: Session = Depends(get_db), _=Depends(admin_required)):
+    # Accept frontend simple payloads like {"name": "Informatique"}
+    nom = payload.get('nom') or payload.get('name')
+    if not nom:
+        raise HTTPException(status_code=422, detail="Missing 'nom' or 'name'")
     # simple uniqueness check by name
-    existing = db.query(Departement).filter(Departement.nom == d.nom).first()
+    existing = db.query(Departement).filter(Departement.nom == nom).first()
     if existing:
         raise HTTPException(status_code=400, detail="Departement with this name already exists")
+    d = DepartementCreate(nom=nom)
     return create_departement(db, d)
 
 
@@ -34,8 +40,8 @@ def read(departement_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{departement_id}", response_model=DepartementRead)
-def delete(d_id: int, db: Session = Depends(get_db)):
-    obj = delete_departement(db, d_id)
+def delete(departement_id: int, db: Session = Depends(get_db)):
+    obj = delete_departement(db, departement_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Departement not found")
     return obj

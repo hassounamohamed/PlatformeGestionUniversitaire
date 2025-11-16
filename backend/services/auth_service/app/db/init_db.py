@@ -1,8 +1,8 @@
-from db.session import engine, Base
+from .session import engine, Base
 import logging
 
 # Importer tous les modèles pour que Base les connaisse
-from models.user import User  # noqa: F401
+from ..models.user import User  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

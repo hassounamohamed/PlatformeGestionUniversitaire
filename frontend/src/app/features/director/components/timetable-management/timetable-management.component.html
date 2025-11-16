@@ -12,9 +12,10 @@
       <p class="subtitle">Création, validation et résolution des conflits</p>
       
       <div class="header-actions">
-        <button mat-raised-button color="primary" (click)="createNewTimetable()">
-          <mat-icon>add</mat-icon>
-          Nouvel Emploi du Temps
+        <button mat-raised-button color="primary" (click)="createNewTimetable()" [disabled]="creating">
+          <mat-icon *ngIf="!creating">add</mat-icon>
+          <mat-icon *ngIf="creating">hourglass_top</mat-icon>
+          {{ creating ? 'Création...' : 'Nouvel Emploi du Temps' }}
         </button>
         <button mat-button color="accent" (click)="exportTimetable()">
           <mat-icon>download</mat-icon>

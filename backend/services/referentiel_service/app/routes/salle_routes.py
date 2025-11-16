@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.schemas.salle import SalleCreate, SalleRead
+from fastapi import Body
 from app.crud.salle_crud import get_salle, get_salles, create_salle, delete_salle, update_salle
 from app.core.database import get_db
 from app.models.salle import Salle
@@ -16,11 +17,23 @@ def list_salles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=SalleRead)
-def create(s: SalleCreate, db: Session = Depends(get_db)):
+def create(payload: dict = Body(...), db: Session = Depends(get_db)):
+    # Accept {name: 'Room 101'} from frontend prompt; map to code and provide defaults.
+    name = payload.get('code') or payload.get('name')
+    if not name:
+        raise HTTPException(status_code=422, detail="Missing 'code' or 'name' for salle")
+    code = name
+    type_ = payload.get('type', 'unknown')
+    try:
+        capacite = int(payload.get('capacite') or 0)
+    except Exception:
+        capacite = 0
     # simple uniqueness check by code
-    existing = db.query(Salle).filter(Salle.code == s.code).first()
+    existing = db.query(Salle).filter(Salle.code == code).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Salle with this code already exists")
+        # If the salle already exists, return it instead of failing — helps idempotent UI create flows
+        return existing
+    s = SalleCreate(code=code, type=type_, capacite=capacite)
     return create_salle(db, s)
 
 

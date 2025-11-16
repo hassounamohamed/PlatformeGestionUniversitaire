@@ -1,0 +1,27 @@
+<h2>Créer un groupe</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" class="group-form">
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Nom</mat-label>
+    <input matInput formControlName="name" />
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Code</mat-label>
+    <input matInput formControlName="code" />
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Semestre</mat-label>
+    <input matInput type="number" formControlName="semester" />
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Capacité max</mat-label>
+    <input matInput type="number" formControlName="maxCapacity" />
+  </mat-form-field>
+
+  <div class="actions">
+    <button mat-button type="button" (click)="cancel()">Annuler</button>
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Créer</button>
+  </div>
+</form>

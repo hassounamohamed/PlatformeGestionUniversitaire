@@ -11,7 +11,7 @@ import { AdminService } from '../../services/admin.service';
   standalone: true,
   imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule],
   templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.css']
+  styleUrls: ['../../admin.styles.css', './admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit {
   stats = {

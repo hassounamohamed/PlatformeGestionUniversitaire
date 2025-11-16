@@ -1,0 +1,68 @@
+<div class="admin-dashboard">
+  <div class="floating-shapes" aria-hidden="true">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Gestion des comptes</h1>
+      <p class="subtitle">Valider ou rejeter les demandes de création de compte utilisateur</p>
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+    <section class="actions-section">
+      <h2>Utilisateurs</h2>
+
+      <div class="action-card">
+        <div class="accounts-toolbar">
+          <div class="left">
+            <input type="text" placeholder="Rechercher un utilisateur..." [(ngModel)]="filter" class="search" />
+            <span class="counter">{{ selection.length }} sélectionné(s)</span>
+          </div>
+          <div class="right">
+            <button class="btn primary" (click)="approveSelected()" [disabled]="selection.length===0">Valider</button>
+            <button class="btn danger" (click)="rejectSelected()" [disabled]="selection.length===0">Rejeter</button>
+            <label class="select-all">
+              <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />
+              <span>Tout</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="accounts-table">
+            <thead>
+              <tr>
+                <th style="width:48px">
+                  <input type="checkbox" [checked]="allSelected" (change)="toggleAll()" />
+                </th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Job</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of filteredData" [class.rowSelected]="selection.includes(item.id)" (click)="toggleRow(item.id)" class="row">
+                <td>
+                  <input type="checkbox" [checked]="selection.includes(item.id)" (click)="$event.stopPropagation(); toggleRow(item.id)" />
+                </td>
+                <td class="user-cell">
+                  <img [src]="item.avatar" alt="avatar" class="avatar" />
+                  <div>
+                    <div class="name">{{ item.name }}</div>
+                    <div class="muted">{{ item.job }}</div>
+                  </div>
+                </td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.job }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

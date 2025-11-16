@@ -98,7 +98,7 @@
                           <mat-icon>edit</mat-icon>
                           <span>Modifier</span>
                         </button>
-                        <button mat-menu-item>
+                        <button mat-menu-item (click)="viewSubjectDetails(subject)">
                           <mat-icon>visibility</mat-icon>
                           <span>Voir détails</span>
                         </button>
@@ -222,11 +222,11 @@
                           <mat-icon>edit</mat-icon>
                           <span>Modifier</span>
                         </button>
-                        <button mat-menu-item>
+                        <button mat-menu-item (click)="manageGroupStudents(group)">
                           <mat-icon>people</mat-icon>
                           <span>Gérer étudiants</span>
                         </button>
-                        <button mat-menu-item>
+                        <button mat-menu-item (click)="openGroupTimetable(group)">
                           <mat-icon>schedule</mat-icon>
                           <span>Emploi du temps</span>
                         </button>

@@ -1,0 +1,61 @@
+<div class="timetable-creator-root">
+  <mat-card class="creator-shell">
+    <mat-card-header>
+      <mat-card-title>Création d'Emploi du Temps</mat-card-title>
+      <mat-card-subtitle>Glisser-déposer depuis la palette vers la grille</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="creator-grid">
+        <aside class="palette">
+          <h3>Palette</h3>
+
+          <mat-form-field appearance="outline" class="subject-input">
+            <input matInput placeholder="Nom de la matière" #subjectName>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="group-select">
+            <mat-select placeholder="Groupe" [(value)]="selectedGroupId">
+              <mat-option *ngFor="let g of groups" [value]="g.id">{{ g.name || g.id }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-raised-button color="primary" (click)="addSubject(subjectName.value); subjectName.value=''">
+            <mat-icon>add</mat-icon> Ajouter
+          </button>
+
+          <div class="palette-list" cdkDropList [cdkDropListData]="subjects" (cdkDropListDropped)="drop($event)">
+            <div class="palette-item" *ngFor="let s of subjects" cdkDrag>
+              <mat-icon>drag_indicator</mat-icon>
+              <span class="subj-name">{{ s.name }}</span>
+              <mat-chip *ngIf="s.groupId" class="small-chip">{{ s.groupId }}</mat-chip>
+            </div>
+          </div>
+        </aside>
+
+        <section class="timetable-area">
+          <div class="grid-header">
+            <div class="time-col">Horaire</div>
+            <div *ngFor="let d of daysOfWeek" class="day-col">{{ d }}</div>
+          </div>
+
+          <div class="grid-body">
+            <div *ngFor="let t of timeSlots; let ti = index" class="grid-row">
+              <div class="time-cell">{{ t }}</div>
+              <div *ngFor="let d of daysOfWeek; let di = index" class="grid-cell" cdkDropList [cdkDropListData]="grid[di][ti]" (cdkDropListDropped)="drop($event, di, ti)">
+                <div class="cell-items">
+                  <div *ngFor="let it of grid[di][ti]; let i = index" class="cell-item">
+                    <div class="item-left"><mat-icon>class</mat-icon> {{ it.name }}</div>
+                    <button mat-icon-button color="warn" (click)="removeFromCell(di, ti, i)"><mat-icon>delete</mat-icon></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="creator-actions">
+            <button mat-raised-button color="primary" (click)="saveTimetable()"><mat-icon>save</mat-icon> Sauvegarder</button>
+          </div>
+        </section>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

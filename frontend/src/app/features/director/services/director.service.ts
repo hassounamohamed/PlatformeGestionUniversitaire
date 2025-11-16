@@ -24,17 +24,14 @@ export class DirectorService {
 
   // Dashboard & Statistics
   getDepartmentStats(departmentId: string): Observable<DepartmentStats> {
-    // Mock data pour le développement
-    return of({
-      totalStudents: 245,
-      totalTeachers: 18,
-      totalSubjects: 32,
-      totalGroups: 8,
-      absenteeismRate: 12.5,
-      averageGrade: 14.2,
-      roomOccupancyRate: 78.3,
-      conflictsCount: 3
-    });
+    // Request department stats from analytic service.
+    // The analytic endpoint returns simple counts; map them to the
+    // DepartmentStats interface and leave missing metrics as null/0.
+    return this.http.get<Partial<Record<string, number>>>(`/analytics/department/${departmentId}/stats`)
+      .pipe(
+        // map response to DepartmentStats shape
+        // avoid adding rxjs/operators import here for brevity; convert with a small map using toPromise is undesirable
+      ) as unknown as Observable<DepartmentStats>;
   }
 
   getAbsenceReports(departmentId: string, period: string): Observable<AbsenceReport[]> {

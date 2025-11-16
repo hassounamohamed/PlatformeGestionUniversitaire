@@ -18,6 +18,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // Routes
 import { directorRoutes } from './director-routing.module';
@@ -25,6 +27,7 @@ import { directorRoutes } from './director-routing.module';
 // Components
 import { DirectorDashboardComponent } from './pages/director-dashboard/director-dashboard.component';
 import { TimetableManagementComponent } from './components/timetable-management/timetable-management.component';
+import { TimetableCreatorComponent } from './components/timetable-creator/timetable-creator.component';
 import { DepartmentStatsComponent } from './components/department-stats/department-stats.component';
 import { ReferentialsComponent } from './components/referentials/referentials.component';
 
@@ -60,10 +63,13 @@ import { DirectorService } from './services/director.service';
     MatSelectModule,
     MatFormFieldModule,
     MatInputModule,
-
-    // All components are standalone, so we import them here
+  DragDropModule,
+  FormsModule,
+  ReactiveFormsModule,
+  // All components are standalone, so we import them here
     DirectorDashboardComponent,
     TimetableManagementComponent,
+    TimetableCreatorComponent,
     DepartmentStatsComponent,
     ReferentialsComponent,
     TimetablePageComponent,

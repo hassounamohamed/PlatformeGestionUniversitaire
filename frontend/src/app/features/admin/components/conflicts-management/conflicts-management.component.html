@@ -1,0 +1,29 @@
+<div class="admin-dashboard">
+  <div class="floating-shapes" aria-hidden="true">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Conflits emplois du temps</h1>
+      <p class="subtitle">Identifier et résoudre les conflits d'horaires</p>
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+    <section class="schedule-section">
+      <div class="action-card">
+        <div style="padding:1rem">
+          <ul style="list-style:none;padding:0">
+            <li *ngFor="let c of conflicts" style="padding:8px 0;border-bottom:1px solid #eee;">
+              [{{ c.severity }}] {{ c.description }} (timetable #{{ c.timetableId }})
+              <div style="float:right"><button class="btn primary" (click)="resolve(c.id)">Résoudre</button></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

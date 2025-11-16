@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { SharedModule } from '../../shared/shared.module';
+import { EventsClient } from '../../core/services/events.service';
 
-type EventItem = { id: number; title: string; date: string; desc?: string; location?: string };
+type EventItem = { id: number; title: string; date: string; desc?: string; location?: string; type?: string };
 
 @Component({
   selector: 'app-landing',
@@ -15,16 +16,18 @@ type EventItem = { id: number; title: string; date: string; desc?: string; locat
   styleUrls: ['./landing.component.css']
 })
 export class LandingComponent implements OnInit, OnDestroy {
-openDashboard() {
-throw new Error('Method not implemented.');
-}
-explore // --- Contact ---
-() {
-throw new Error('Method not implemented.');
-}
+  private _eventsSub: any = null;
+  constructor(private eventsClient: EventsClient) {}
+  openDashboard() {
+    throw new Error('Method not implemented.');
+  }
+  explore // --- Contact ---
+  () {
+    throw new Error('Method not implemented.');
+  }
   // derived list of upcoming events (sorted, future or today)
   get upcomingEvents(): EventItem[] {
-    const todayKey = new Date().toISOString().slice(0, 10);
+    const todayKey = this.formatDateKey(new Date());
     return this.events
       .filter(e => e.date >= todayKey)
       .sort((a, b) => a.date.localeCompare(b.date));
@@ -74,9 +77,9 @@ throw new Error('Method not implemented.');
 
   // --- Events (nouvelle fonctionnalité) ---
   events: EventItem[] = [
-    { id: 1, title: 'Rentrée générale', date: this.isoForOffsetDays(7), desc: 'Accueil des nouveaux étudiants', location: 'Amphi A' },
-    { id: 2, title: 'Conférence IA', date: this.isoForOffsetDays(20), desc: 'Conférence sur l’intelligence artificielle.', location: 'Salle 101' },
-    { id: 3, title: 'Hackathon', date: this.isoForOffsetDays(35), desc: '48h de challenges pour étudiants.', location: 'Lab central' }
+    { id: 1, title: 'Rentrée générale', date: this.isoForOffsetDays(7), desc: 'Accueil des nouveaux étudiants', location: 'Amphi A', type: 'rentree' },
+    { id: 2, title: 'Conférence IA', date: this.isoForOffsetDays(20), desc: 'Conférence sur l’intelligence artificielle.', location: 'Salle 101', type: 'conference' },
+    { id: 3, title: 'Hackathon', date: this.isoForOffsetDays(35), desc: '48h de challenges pour étudiants.', location: 'Lab central', type: 'hackathon' }
   ];
   private _nextEventId = 4;
 
@@ -99,11 +102,16 @@ throw new Error('Method not implemented.');
     this.animateCount('students', this.studentsTarget, 1400);
     this.animateCount('specialties', this.specialtiesTarget, 1000);
     this.updateCalendar();
+    // load persisted events from backend
+    this.loadBackendEvents();
+    // subscribe to changes so admin creates refresh the landing page
+    this._eventsSub = this.eventsClient.eventsChanged$.subscribe(() => this.loadBackendEvents());
   }
 
   ngOnDestroy(): void {
     if (this._carouselTimer) clearInterval(this._carouselTimer);
     if (this._contactTimer) clearTimeout(this._contactTimer);
+    if (this._eventsSub) this._eventsSub.unsubscribe();
   }
 
   // --- Carousel ---
@@ -132,7 +140,7 @@ throw new Error('Method not implemented.');
   // --- News management ---
   addNews() {
     if (!this.editTitle || !this.editBody) return;
-    const item = { id: this._nextNewsId++, title: this.editTitle, body: this.editBody, date: new Date().toISOString().slice(0, 10) };
+    const item = { id: this._nextNewsId++, title: this.editTitle, body: this.editBody, date: this.formatDateKey(new Date()) };
     this.newsItems.unshift(item);
     this.clearEditor();
   }
@@ -155,7 +163,7 @@ throw new Error('Method not implemented.');
   isoForOffsetDays(offset: number) {
     const d = new Date();
     d.setDate(d.getDate() + offset);
-    return d.toISOString().slice(0, 10);
+    return this.formatDateKey(d);
   }
 
   updateCalendar() {
@@ -184,7 +192,7 @@ throw new Error('Method not implemented.');
   }
 
   eventsForDate(d: Date) {
-    const key = d.toISOString().slice(0, 10);
+    const key = this.formatDateKey(d);
     return this.events.filter(e => e.date === key);
   }
 
@@ -197,16 +205,49 @@ throw new Error('Method not implemented.');
 
   addEvent() {
     if (!this.newEvent.title || !this.newEvent.date) return;
-    const ev: EventItem = {
-      id: this._nextEventId++,
-      title: this.newEvent.title!,
-      date: this.newEvent.date!,
-      desc: this.newEvent.desc || '',
-      location: this.newEvent.location || ''
-    };
-    this.events.push(ev);
-    this.newEvent = { title: '', date: '', desc: '', location: '' };
-    this.updateCalendar();
+    // prepare backend payload - ensure datetime format
+    const isoDate = this.newEvent.date!.includes('T') ? this.newEvent.date! : `${this.newEvent.date}T09:00:00`;
+    const payload = { titre: this.newEvent.title!, type: 'institutionnel', date: isoDate, description: this.newEvent.desc || '' };
+    this.eventsClient.createEvent(payload).subscribe({
+      next: ev => {
+        const item: EventItem = { id: ev.id, title: ev.titre, date: (ev.date || '').slice(0, 10), desc: ev.description || '', location: '', type: ev.type || 'institutionnel' };
+        this.events.push(item);
+        this.newEvent = { title: '', date: '', desc: '', location: '' };
+        this.updateCalendar();
+      },
+      error: err => console.error('Failed creating event', err)
+    });
+  }
+
+  private loadBackendEvents() {
+    this.eventsClient.listEvents().subscribe({
+      next: list => {
+        this.events = list.map(e => ({ id: e.id, title: e.titre, date: (e.date || '').slice(0, 10), desc: e.description || '', location: '', type: e.type || this.getEventType(e.titre) }));
+        this.updateCalendar();
+      },
+      error: err => console.error('Failed loading events', err)
+    });
+  }
+
+  // Map internal type code to a user-friendly label
+  eventTypeLabel(type?: string): string {
+    if (!type) return 'Default';
+    const t = type.toLowerCase();
+    switch (t) {
+      case 'conference': return 'Conférence';
+      case 'hackathon': return 'Hackathon';
+      case 'institutionnel': return 'Institutionnel';
+      case 'rentree': case 'rentrée': return 'Rentrée';
+      case 'default': default: return 'Default';
+    }
+  }
+
+  // Format a Date to local YYYY-MM-DD (used as calendar key)
+  formatDateKey(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   prevMonth() { this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1); this.updateCalendar(); }

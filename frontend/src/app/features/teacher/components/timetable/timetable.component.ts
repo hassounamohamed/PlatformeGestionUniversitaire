@@ -83,10 +83,10 @@ export class TimetableComponent implements OnInit {
 
   timeSlots: TimeSlot[] = [
     { start: '08:30', end: '10:00' },
-    { start: '10:15', end: '11:45' },
-    { start: '12:00', end: '13:30' },
-    { start: '14:00', end: '15:30' },
-    { start: '15:45', end: '17:15' }
+    { start: '10:10', end: '11:40' },
+    { start: '11:50', end: '13:20' },
+    { start: '14:30', end: '16:00' },
+    { start: '16:10', end: '17:40' }
   ];
 
   courses: Course[] = [
@@ -107,8 +107,8 @@ export class TimetableComponent implements OnInit {
       room: '205',
       type: 'td',
       day: 'Lundi',
-      startTime: '10:15',
-      endTime: '11:45'
+      startTime: '10:10',
+      endTime: '11:40'
     },
     {
       id: '3',
@@ -117,8 +117,8 @@ export class TimetableComponent implements OnInit {
       room: '103',
       type: 'tp',
       day: 'Mardi',
-      startTime: '14:00',
-      endTime: '15:30'
+      startTime: '14:30',
+      endTime: '16:00'
     },
     {
       id: '4',
@@ -137,8 +137,8 @@ export class TimetableComponent implements OnInit {
       room: '102',
       type: 'td',
       day: 'Jeudi',
-      startTime: '10:15',
-      endTime: '11:45'
+      startTime: '10:10',
+      endTime: '11:40'
     },
     {
       id: '6',
@@ -147,8 +147,8 @@ export class TimetableComponent implements OnInit {
       room: '204',
       type: 'tp',
       day: 'Vendredi',
-      startTime: '15:45',
-      endTime: '17:15'
+      startTime: '16:10',
+      endTime: '17:40'
     }
   ];
 
@@ -162,13 +162,13 @@ export class TimetableComponent implements OnInit {
     {
       subject: 'Base de Données',
       date: new Date('2025-10-19'),
-      time: '14:00 - 15:30',
+      time: '14:30 - 16:00',
       room: '103'
     },
     {
       subject: 'Algorithmique',
       date: new Date('2025-10-20'),
-      time: '10:15 - 11:45',
+      time: '10:10 - 11:40',
       room: '205'
     }
   ];

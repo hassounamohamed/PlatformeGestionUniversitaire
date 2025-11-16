@@ -1,19 +1,105 @@
-<div class="admin-page">
-  <div class="panel">
-    <div class="panel-header">
-      <h2>Rapports institutionnels</h2>
-      <div class="actions">
-        <button class="btn-primary" (click)="exportPDF()">Exporter PDF</button>
-        <button (click)="exportCSV()">Exporter CSV</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <p>Générez des rapports institutionnels (PDF / CSV).</p>
-      <ul>
-        <li>Emplois du temps</li>
-        <li>Conflits</li>
-        <li>Présences et performances</li>
-      </ul>
-    </div>
+
+  <div class="floating-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
   </div>
-</div>
+
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1>Rapports institutionnels</h1>
+      <p class="subtitle">Générez des rapports clairs et téléchargeables (CSV / PDF).</p>
+    </div>
+  </header>
+
+  <div class="dashboard-content reports-layout">
+    <aside class="admin-sidebar panel">
+      <div class="panel-header">
+        <strong>Types de rapports</strong>
+      </div>
+      <div class="panel-body">
+        <ul class="types-list">
+          <li *ngFor="let t of reportTypes">
+            <button
+              type="button"
+              class="btn"
+              [ngClass]="{ 'primary': t.key === selectedType, 'outline': t.key !== selectedType }"
+              (click)="selectedType = t.key"
+              title="{{ t.label }}"
+            >
+              {{ t.label }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="admin-content">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Générer un rapport</h2>
+          <div class="actions" aria-hidden="true">
+            <!-- Removed duplicate Export buttons: Generation will produce the chosen format -->
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <form (ngSubmit)="generateReport(); false" class="report-form" autocomplete="off">
+            <div class="form-row">
+              <label>Type:</label>
+              <div class="value">{{ selectedLabel }}</div>
+            </div>
+
+            <div class="form-row">
+              <label for="from">Période — du</label>
+              <input id="from" class="form-control" type="date" [(ngModel)]="fromDate" name="from">
+              <label for="to">au</label>
+              <input id="to" class="form-control" type="date" [(ngModel)]="toDate" name="to">
+            </div>
+
+            <div class="form-row">
+              <label for="department">Département / Filière (optionnel)</label>
+              <input id="department" class="form-control" list="departments" type="text" [(ngModel)]="department" name="department" placeholder="ex: Informatique">
+              <datalist id="departments">
+                <option *ngFor="let d of departments" [value]="d"></option>
+              </datalist>
+            </div>
+
+            <div class="form-row">
+              <label>Format</label>
+              <label class="radio"><input type="radio" name="format" [(ngModel)]="format" value="csv"> CSV</label>
+              <label class="radio"><input type="radio" name="format" [(ngModel)]="format" value="pdf"> PDF</label>
+            </div>
+
+            <div class="form-row actions">
+              <div class="left-actions">
+                <button class="btn primary" type="button" (click)="generateReport()" [disabled]="loading">{{ loading ? 'Génération...' : (format === 'csv' ? 'Générer CSV' : 'Générer PDF') }}</button>
+                <button class="btn outline small" type="button" (click)="resetForm()">Réinitialiser</button>
+              </div>
+              <div class="right-meta">
+                <small class="muted">Période affichée: {{ formattedFrom }} {{ formattedFrom && formattedTo ? '—' : '' }} {{ formattedTo }}</small>
+              </div>
+            </div>
+          </form>
+
+          <div class="preview">
+            <p *ngIf="message" class="muted">{{ message }}</p>
+            <p *ngIf="lastResult.length">Résultats: {{ lastResult.length }} lignes</p>
+            <table *ngIf="lastResult.length" class="preview-table">
+              <thead>
+                <tr>
+                  <th *ngFor="let h of previewHeaders">{{ h }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of lastResult.slice(0,6)">
+                  <td *ngFor="let h of previewHeaders">{{ row[h] }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+

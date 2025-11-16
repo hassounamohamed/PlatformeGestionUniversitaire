@@ -1,18 +1,47 @@
-<div class="admin-page">
-  <div class="panel">
-    <div class="panel-header">
-      <h2>Événements institutionnels</h2>
-      <div class="actions"><button class="btn-primary" (click)="add()">Nouvel événement</button></div>
-    </div>
-    <div class="panel-body">
-      <ul class="events-list">
-        <li *ngFor="let e of events">
-          <div class="title">{{e.title}}</div>
-          <div class="meta">{{e.date | date:'medium'}}</div>
-          <div class="actions"><button class="btn-danger" (click)="remove(e)">Supprimer</button></div>
-        </li>
-        <li *ngIf="events?.length === 0" class="empty">Aucun événement</li>
-      </ul>
+<div class="events-management">
+  <div class="header">
+    <h2>Événements institutionnels</h2>
+    <button class="btn btn-primary" (click)="toggleForm()">Nouvel événement</button>
+  </div>
+
+  <div *ngIf="showForm" class="modal-overlay" (click)="cancelEdit()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingId ? 'Modifier événement' : 'Nouvel événement' }}</h3>
+        <button class="close" (click)="cancelEdit()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <label>Titre</label>
+        <input [(ngModel)]="form.titre" placeholder="Titre de l'événement" />
+        <label>Date</label>
+        <input type="date" [(ngModel)]="form.date" />
+        <label>Type</label>
+        <select [(ngModel)]="form.type">
+          <option *ngFor="let t of eventTypes" [value]="t.value">{{ t.label }}</option>
+        </select>
+        <label>Description</label>
+        <textarea [(ngModel)]="form.description"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="submit()">{{ editingId ? 'Mettre à jour' : 'Enregistrer' }}</button>
+        <button class="btn btn-cancel" (click)="cancelEdit()">Annuler</button>
+      </div>
     </div>
   </div>
+
+  <div *ngIf="loading">Chargement...</div>
+  <div *ngIf="!loading && events.length === 0">Aucun événement</div>
+  <ul class="events-list">
+    <li *ngFor="let e of events">
+      <div class="date">{{ e.date }}</div>
+      <div class="title">{{ e.titre }}</div>
+      <div class="meta">
+        <div class="desc">{{ e.description }}</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-edit" (click)="editEvent(e)">Modifier</button>
+        <button class="btn btn-delete" (click)="deleteEvent(e)">Supprimer</button>
+      </div>
+    </li>
+  </ul>
 </div>

@@ -5,6 +5,20 @@
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
+.page-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  color: var(--brand-white);
+  /* Slight translucent backdrop so header stays readable above content */
+  background: linear-gradient(rgba(0,0,0,0.04), rgba(0,0,0,0.02));
+  backdrop-filter: blur(4px);
+}
+
 /* Floating Shapes Background */
 .floating-shapes {
   position: fixed;
@@ -40,22 +54,17 @@
   animation: float 22s infinite ease-in-out reverse;
 }
 
-/* Header */
-.page-header {
-  position: relative;
-  z-index: 10;
-  padding: 2rem 1.5rem 1rem;
-  color: var(--brand-white);
-}
+
+
 
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .header-content h1 {
@@ -75,6 +84,7 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+  margin-top: 0.5rem;
 }
 
 /* Loading */
@@ -336,7 +346,7 @@
   
   .header-content {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
   }
   
   .header-content h1 {
@@ -377,7 +387,7 @@
   
   .header-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
   }
   
   .weekly-grid {

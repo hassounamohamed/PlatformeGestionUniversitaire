@@ -1,0 +1,36 @@
+.rowSelected {
+	background-color: rgba(59, 130, 246, 0.12); /* highlighted row */
+}
+
+/* Keep some basic table defaults when embedded inside the dashboard card */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
+th { background: #fafafa; color: #333; font-weight: 600; }
+
+/* Toolbar */
+.accounts-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.75rem 1rem 0; }
+.accounts-toolbar .left { display:flex; align-items:center; gap:0.75rem; }
+.search { padding:0.5rem 0.75rem; border-radius:8px; border:1px solid #e0e0e0; min-width:260px; }
+.counter { color:#666; font-size:0.9rem; }
+.accounts-toolbar .right { display:flex; align-items:center; gap:0.5rem; }
+
+/* Buttons */
+.btn { padding:0.45rem 0.8rem; border-radius:8px; border: none; cursor:pointer; font-weight:600; margin: 20px;}
+.btn.primary { background: linear-gradient(135deg, var(--brand-dark-blue), var(--brand-light-blue)); color:white; }
+.btn.danger { background:#ff6666; color:white; margin:10px; }
+.btn[disabled] { opacity:0.5; cursor:not-allowed; }
+
+/* Table visuals */
+.accounts-table tbody tr { transition: background .15s ease, transform .06s ease; }
+.accounts-table tbody tr:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.user-cell { display:flex; align-items:center; gap:0.75rem; }
+.name { font-weight:700; color:var(--brand-dark-blue); }
+.muted { color:#666; font-size:0.85rem; }
+
+/* Responsive */
+@media (max-width: 720px) {
+	.accounts-toolbar { flex-direction:column; align-items:stretch; gap:0.5rem; }
+	.accounts-table { font-size:0.9rem; }
+	.search { min-width:unset; width:100%; }
+}

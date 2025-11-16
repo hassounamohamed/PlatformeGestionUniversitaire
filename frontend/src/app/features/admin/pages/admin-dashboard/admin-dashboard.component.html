@@ -93,6 +93,18 @@
           </mat-card-content>
         </mat-card>
 
+        <mat-card class="action-card" (click)="navigateTo('accounts')">
+          <div class="action-header">
+            <div class="action-icon">
+              <mat-icon>manage_accounts</mat-icon>
+            </div>
+          </div>
+          <mat-card-content>
+            <h3>Gestion des Comptes</h3>
+            <p>Approuver, révoquer et gérer les comptes utilisateurs</p>
+          </mat-card-content>
+        </mat-card>
+
         <mat-card class="action-card" (click)="navigateTo('conflicts')">
           <div class="action-header">
             <div class="action-icon">

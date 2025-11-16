@@ -1,15 +1,388 @@
-.panel{ background: rgba(255,255,255,0.98); border-radius:12px; box-shadow:0 10px 30px rgba(2,6,23,0.06); overflow:hidden }
-.panel-header{ display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid rgba(2,6,23,0.04) }
-.panel-title{ margin:0; font-size:1.05rem; font-weight:700; color:var(--brand-dark-blue) }
-.panel-body{ padding:16px }
-.controls{ display:flex; gap:8px; align-items:center }
-.btn{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600 }
-.btn-primary{ background: linear-gradient(135deg, var(--brand-dark-blue), var(--brand-light-blue)); color:#fff; box-shadow:0 8px 20px rgba(18,52,86,0.08) }
-.btn-outline{ background:transparent; border:1px solid rgba(2,6,23,0.06); color:var(--brand-dark-blue) }
+.events-management {
+	position: relative;
+	min-height: 100vh;
+	background: linear-gradient(135deg, var(--brand-dark-blue) 0%, var(--brand-light-blue) 100%);
+	font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	overflow-x: hidden;
+	/* header at top */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	padding-top: 28px;
+}
 
-.reports-grid{ display:grid; grid-template-columns: 1fr 360px; gap:16px }
-.chart-card{ min-height:240px }
+/* Report component specific styles (keeps visual language from events-management) */
+.report-form { display:flex; flex-direction:column; gap:12px; }
+.report-form .form-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.report-form label { min-width:140px; color:var(--brand-dark-blue); font-weight:700; font-size:0.95rem }
+.report-form .value { color:#1e3a57; font-weight:700 }
+.form-control { padding:8px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); min-height:38px; }
+.form-control[type="date"]{ padding:6px 10px }
+.report-form .actions { display:flex; gap:8px; align-items:center; }
+.report-form .radio input { margin-right:8px }
 
+
+.admin-sidebar .panel-body { padding: 14px 16px; overflow: hidden }
+.admin-sidebar .panel-header { padding: 12px 16px }
+.admin-sidebar ul { list-style:none; padding:0; margin:0 }
+
+/* Types list rendered as buttons and harmonized with .btn classes */
+.admin-sidebar .types-list { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:0; padding:4px 0 }
+.admin-sidebar .types-list { justify-content: flex-start }
+.admin-sidebar .types-list li { list-style:none }
+.admin-sidebar .types-list li { padding: 0; margin: 0 }
+.admin-sidebar .types-list .btn {
+	padding: 8px 16px;
+	border-radius: 10px;
+	min-width: 120px;
+	max-width: 220px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-weight: 600;
+}
+.admin-sidebar .types-list .btn.outline {
+	background: rgba(255,255,255,0.95);
+	color: var(--brand-dark-blue);
+	border: 1px solid rgba(2,6,23,0.06);
+	box-shadow: 0 6px 12px rgba(2,6,23,0.04);
+}
+.admin-sidebar .types-list .btn.primary {
+	background: linear-gradient(135deg, var(--brand-dark-blue), var(--brand-light-blue));
+	color: #fff;
+	border: 1px solid transparent;
+	box-shadow: 0 10px 20px rgba(14,50,90,0.12);
+}
+
+.preview { margin-top:14px }
+.preview-table { width:100%; border-collapse:collapse; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(2,6,23,0.06) }
+.preview-table th, .preview-table td { text-align:left; padding:10px; border-bottom:1px solid rgba(0,0,0,0.06) }
+.preview-table thead { background:#fafbfd }
+
+/* Buttons: harmonisation and small outline variant for Reset */
+.btn { padding: 10px 14px; border-radius: 10px; font-weight:600; display:inline-flex; align-items:center }
+.btn.primary { background: linear-gradient(135deg, var(--brand-dark-blue), var(--brand-light-blue)); color: #fff }
+.btn.outline { background: transparent; border: 1px solid rgba(0,0,0,0.06); color: #1e3a57 }
+.btn.small { padding:6px 10px; font-size:0.9rem; border-radius:8px }
+
+.left-actions { display:flex; gap:10px; align-items:center }
+.right-meta { margin-left:auto }
+.muted { color: rgba(0,0,0,0.45); font-size:0.9rem }
+
+/* Slightly more breathing room for the panel-body on reports page */
+.events-management .dashboard-content.reports-layout .panel { padding: 26px }
+
+/* small responsive adjustments */
 @media (max-width:900px){
-	.reports-grid{ grid-template-columns: 1fr }
+	.admin-sidebar{ width:100% }
+	.dashboard-content{ flex-direction:column }
+}
+
+/* Reports-specific layout: sidebar left & vertical on wide screens */
+.events-management .dashboard-content.reports-layout {
+	align-items: flex-start; /* stretch panels vertically from top */
+	justify-content: flex-start; /* place sidebar on the left */
+}
+.events-management .dashboard-content.reports-layout { gap: 18px }
+.events-management .dashboard-content.reports-layout .admin-sidebar {
+	display: flex;
+	flex-direction: column;
+	width: 420px; /* reduced width so it's proportional to the main panel */
+	min-height: 160px;
+	align-self: flex-start;
+	/* make the sidebar visually fixed near the top of the content area */
+	position: sticky;
+	top: 96px; /* below header — tweak if needed */
+	margin-right: 6px;
+}
+.events-management .dashboard-content.reports-layout .admin-content {
+	flex: 1 1 auto;
+	min-width: 0; /* allow content to shrink properly */
+}
+
+/* Center button text specifically for reports layout so other pages are unaffected */
+.events-management .dashboard-content.reports-layout .btn,
+.events-management .dashboard-content.reports-layout .btn.primary,
+.events-management .dashboard-content.reports-layout .btn-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+/* Also apply the same rules directly to the component host so the styles work
+   without needing the .events-management class in the template. */
+:host {
+	position: relative;
+	min-height: 100vh;
+	background: linear-gradient(135deg, var(--brand-dark-blue) 0%, var(--brand-light-blue) 100%);
+	font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	padding-top: 28px;
+}
+
+:host .floating-shapes {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	z-index: 0;
+	pointer-events: none;
+}
+
+:host .shape { position: absolute; background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); border-radius:50%; }
+:host .shape-1{ width:260px; height:260px; top:8%; left:-110px; animation: float 20s infinite ease-in-out }
+:host .shape-2{ width:180px; height:180px; top:52%; right:-60px; animation: float 15s infinite ease-in-out reverse }
+:host .shape-3{ width:120px; height:120px; bottom:18%; left:80%; animation: float 18s infinite ease-in-out }
+
+:host .dashboard-header{ position: relative; z-index:10; padding:0.9rem 1rem 0.6rem; text-align:center; color:var(--brand-white); width:100% }
+:host .dashboard-header .header-content{ max-width:1200px; margin:0 auto; padding:0 1rem }
+:host .header-content h1{ font-size:1.8rem; margin:0 0 0.25rem 0; font-weight:800; text-shadow:0 4px 10px rgba(0,0,0,0.22) }
+:host .subtitle{ font-size:0.98rem; opacity:0.95; margin:0 }
+
+@keyframes float{ 0%,100%{ transform:translate(0,0) rotate(0deg) } 33%{ transform:translate(30px,-30px) rotate(120deg) } 66%{ transform:translate(-20px,20px) rotate(240deg) } }
+
+:host .dashboard-content{
+	position: relative;
+	z-index:10;
+	display:flex;
+	gap:24px;
+	align-items:center;
+	justify-content:center;
+	padding:0 1.5rem;
+	width: min(1200px, calc(100% - 3rem));
+	max-width:1200px;
+	margin: auto;
+	min-height: calc(100vh - 160px);
+	box-sizing: border-box;
+}
+
+:host .panel{ background: rgba(255,255,255,0.98); border-radius:14px; box-shadow:0 18px 40px rgba(2,6,23,0.10); overflow:hidden; transition:all .18s ease }
+:host .panel:hover{ transform: translateY(-4px); box-shadow:0 22px 50px rgba(2,6,23,0.12) }
+:host .panel-header{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid rgba(2,6,23,0.04) }
+:host .panel-body{ padding:20px }
+
+:host .btn.primary, :host .btn-primary{ padding:10px 16px; font-size:0.95rem; border-radius:10px; margin: 10px 10px 10px 10px; }
+
+@media (max-width:10000px){
+	:host .dashboard-content{
+		flex-direction:column;
+		gap:1rem;
+		margin: 10px auto 1rem;
+		padding:0 1rem 1rem;
+		min-height: auto;
+		align-items: stretch;
+		justify-content: flex-start;
+	}
+}
+@media (max-width:700px){ :host .floating-shapes{ display:none } }
+
+:host .panel {
+	background: rgba(255,255,255,0.98);
+	border-radius: 14px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+	padding: 20px;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+	transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+:host .panel:hover {
+	transform: translateY(-6px);
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+:host .panel-header {
+	background: #f8f9fc;
+	font-weight: 600;
+	font-size: 1.1rem;
+	padding: 16px 20px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+:host .btn.primary,
+:host .btn-primary {
+	background: linear-gradient(135deg, var(--brand-dark-blue), var(--brand-light-blue));
+	color: #fff;
+	font-weight: 600;
+	border: none;
+	border-radius: 14px;
+	padding: 10px 16px;
+	box-shadow: 0 8px 20px rgba(18,52,86,0.08);
+	transition: background 0.3s ease, transform 0.12s ease;
+	cursor: pointer;	
+}
+:host .btn.primary:hover,
+:host .btn-primary:hover {
+	transform: translateY(-1px);
+	filter: brightness(0.98);
+}
+:host .btn.primary:focus,
+:host .btn-primary:focus {
+	outline: 3px solid rgba(0,0,0,0.06);
+	outline-offset: 2px;
+}
+
+:host .panel-body ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+:host .panel-body li {
+	padding: 10px 0;
+	border-bottom: 1px solid rgba(0,0,0,0.05);
+	font-size: 0.95rem;
+}
+:host .panel-body li:last-child {
+	border-bottom: none;
+}
+
+:host .panel-body .actions {
+	margin-top: 10px;
+}
+
+.events-management .floating-shapes {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	z-index: 0;
+	pointer-events: none;
+}
+
+.events-management .shape { position: absolute; background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); border-radius:50%; }
+.events-management .shape-1{ width:260px; height:260px; top:8%; left:-110px; animation: float 20s infinite ease-in-out }
+.events-management .shape-2{ width:180px; height:180px; top:52%; right:-60px; animation: float 15s infinite ease-in-out reverse }
+.events-management .shape-3{ width:120px; height:120px; bottom:18%; left:80%; animation: float 18s infinite ease-in-out }
+
+.events-management .dashboard-header{ position: relative; z-index:10; padding:0.9rem 1rem 0.6rem; text-align:center; color:var(--brand-white); width:100% }
+.events-management .dashboard-header .header-content{ max-width:1200px; margin:0 auto; padding:0 1rem }
+.events-management .header-content h1{ font-size:1.8rem; margin:0 0 0.25rem 0; font-weight:800; text-shadow:0 4px 10px rgba(0,0,0,0.22) }
+.events-management .subtitle{ font-size:0.98rem; opacity:0.95; margin:0 }
+
+@keyframes float{ 0%,100%{ transform:translate(0,0) rotate(0deg) } 33%{ transform:translate(30px,-30px) rotate(120deg) } 66%{ transform:translate(-20px,20px) rotate(240deg) } }
+
+.events-management .dashboard-content{
+	position: relative;
+	z-index:10;
+	display:flex;
+	gap:24px;
+	align-items:center; /* center children vertically */
+	justify-content:center; /* center children horizontally */
+	padding:0 1.5rem;
+	width: min(1200px, calc(100% - 3rem));
+	max-width:1200px;
+	margin: auto;
+	min-height: calc(100vh - 160px); /* make the container big and centered vertically */
+	box-sizing: border-box;
+}
+
+/* panel prominence */
+.events-management .panel{ background: rgba(255,255,255,0.98); border-radius:14px; box-shadow:0 18px 40px rgba(2,6,23,0.10); overflow:hidden; transition:all .18s ease }
+.events-management .panel:hover{ transform: translateY(-4px); box-shadow:0 22px 50px rgba(2,6,23,0.12) }
+.events-management .panel-header{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid rgba(2,6,23,0.04) }
+.events-management .panel-body{ padding:20px }
+
+/* larger primary buttons */
+.events-management .btn.primary, .events-management .btn-primary{ padding:10px 16px; font-size:0.95rem; border-radius:10px; margin-top: 10; }
+
+/* reuse panel styles from admin (panel, btn etc. available globally) */
+
+@media (max-width:10000px){
+	.events-management .dashboard-content{
+		flex-direction:column;
+		gap:1rem;
+		margin: 10px auto 1rem;
+		padding:0 1rem 1rem;
+		min-height: auto; /* don't force large height on small screens */
+		align-items: stretch;
+		justify-content: flex-start;
+	}
+}
+@media (max-width:700px){ .events-management .floating-shapes{ display:none } }
+
+/* Consolidated panel/button/list styles (keeps original panel background from earlier rule)
+   - Removed duplicate definitions and added small accessibility & hover polish.
+   - IMPORTANT: main page background (linear-gradient on .events-management) is unchanged.
+*/
+.events-management .panel {
+	background: rgba(255,255,255,0.98); /* preserved from earlier definition */
+	border-radius: 14px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+	padding: 20px;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+	transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.events-management .panel:hover {
+	transform: translateY(-6px);
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.events-management .panel-header {
+	background: #f8f9fc; /* léger gris pour contraste */
+	font-weight: 600;
+	font-size: 1.1rem;
+	padding: 16px 20px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+/* Boutons primaires (unifiés) */
+.events-management .btn.primary,
+.events-management .btn-primary {
+	background: linear-gradient(135deg, var(--brand-dark-blue), var(--brand-light-blue));
+	color: #fff;
+	font-weight: 600;
+	border: none;
+	border-radius: 8px;
+	padding: 10px 16px;
+	box-shadow: 0 8px 20px rgba(18,52,86,0.08);
+	transition: background 0.3s ease, transform 0.12s ease;
+	cursor: pointer;
+}
+.events-management .btn.primary:hover,
+.events-management .btn-primary:hover {
+	transform: translateY(-1px);
+	filter: brightness(0.98);
+}
+.events-management .btn.primary:focus,
+.events-management .btn-primary:focus {
+	outline: 3px solid rgba(0,0,0,0.06);
+	outline-offset: 2px;
+}
+
+/* Liste des événements (léger nettoyage) */
+.events-management .panel-body ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.events-management .panel-body li {
+	padding: 10px 0;
+	border-bottom: 1px solid rgba(0,0,0,0.05);
+	font-size: 0.95rem;
+}
+.events-management .panel-body li:last-child {
+	border-bottom: none;
+}
+
+/* spacing for action buttons under event text */
+.events-management .panel-body .actions {
+	margin-top: 10px; /* small gap between text/date and the button */
 }

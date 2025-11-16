@@ -6,9 +6,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.user import User
-from schemas.user import UserCreate, TokenData
-from config import settings
+# package-relative imports
+from ..models.user import User
+from ..schemas.user import UserCreate, TokenData
+from ..config import settings
 import logging
 
 # Configuration de la sécurité
@@ -136,7 +137,7 @@ class AuthService:
             token: str = Depends(oauth2_scheme)
     ) -> dict:
         """Récupère l'utilisateur actuel à partir du token"""
-        from db.session import get_db
+        from ..db.session import get_db
 
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -158,7 +159,7 @@ class AuthService:
             raise credentials_exception
 
         # Créer une session temporaire pour vérifier l'utilisateur
-        from db.session import AsyncSessionLocal
+        from ..db.session import AsyncSessionLocal
         async with AsyncSessionLocal() as db:
             auth_service = AuthService(db)
             user = await auth_service.get_user_by_email(email=token_data.email)

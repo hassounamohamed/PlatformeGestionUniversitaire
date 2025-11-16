@@ -19,7 +19,7 @@ export class ApiService {
 				if (v !== undefined && v !== null) httpParams = httpParams.set(k, String(v));
 			});
 		}
-		const url = `${this.base}${path.startsWith('/') ? path : '/' + path}`;
+		const url = path.startsWith('http') ? path : `${this.base}${path.startsWith('/') ? path : '/' + path}`;
 			const responseType = options?.responseType ?? 'json';
 			if (responseType === 'json') {
 				return this.http.get<T>(url, { params: httpParams }) as Observable<T>;
@@ -29,17 +29,22 @@ export class ApiService {
 	}
 
 	post<T>(path: string, body: any): Observable<T> {
-		const url = `${this.base}${path.startsWith('/') ? path : '/' + path}`;
+		const url = path.startsWith('http') ? path : `${this.base}${path.startsWith('/') ? path : '/' + path}`;
 		return this.http.post<T>(url, body);
 	}
 
 	put<T>(path: string, body: any): Observable<T> {
-		const url = `${this.base}${path.startsWith('/') ? path : '/' + path}`;
+		const url = path.startsWith('http') ? path : `${this.base}${path.startsWith('/') ? path : '/' + path}`;
 		return this.http.put<T>(url, body);
 	}
 
+	patch<T>(path: string, body: any): Observable<T> {
+		const url = path.startsWith('http') ? path : `${this.base}${path.startsWith('/') ? path : '/' + path}`;
+		return this.http.patch<T>(url, body);
+	}
+
 	delete<T>(path: string): Observable<T> {
-		const url = `${this.base}${path.startsWith('/') ? path : '/' + path}`;
+		const url = path.startsWith('http') ? path : `${this.base}${path.startsWith('/') ? path : '/' + path}`;
 		return this.http.delete<T>(url);
 	}
 }

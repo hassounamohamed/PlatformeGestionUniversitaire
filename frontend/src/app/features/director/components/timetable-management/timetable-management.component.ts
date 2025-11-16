@@ -11,6 +11,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { DirectorService } from '../../services/director.service';
+import { Router } from '@angular/router';
+import { TimetableCreatorService } from '../timetable-creator/timetable-creator.service';
 import { Timetable, TimetableConflict } from '../../models/director.models';
 
 @Component({
@@ -36,14 +38,15 @@ export class TimetableManagementComponent implements OnInit {
   timetables: Timetable[] = [];
   conflicts: TimetableConflict[] = [];
   loading = true;
+  creating = false;
   
   displayedColumns: string[] = ['subject', 'group', 'teacher', 'time', 'room', 'status', 'actions'];
   conflictColumns: string[] = ['type', 'description', 'severity', 'actions'];
   
   daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
   timeSlots = [
-    '08:00-09:30', '09:45-11:15', '11:30-13:00', 
-    '14:00-15:30', '15:45-17:15', '17:30-19:00'
+    '08:30-10:00', '10:10-11:40', '11:50-13:20',
+    '14:30-16:00', '16:10-17:40'
   ];
 
   weeklyView: any[][] = [];
@@ -51,7 +54,9 @@ export class TimetableManagementComponent implements OnInit {
   constructor(
     private directorService: DirectorService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private creatorService: TimetableCreatorService
   ) {}
 
   ngOnInit() {
@@ -154,14 +159,60 @@ export class TimetableManagementComponent implements OnInit {
     }
   }
 
+  editTimetable(timetable: Timetable) {
+    // Minimal edit: allow changing room and time for demo purposes
+    const newRoom = prompt('Nouvelle salle:', timetable.roomId) || timetable.roomId;
+    const newStart = prompt('Nouvelle heure de début (HH:mm):', timetable.startTime) || timetable.startTime;
+    const newEnd = prompt('Nouvelle heure de fin (HH:mm):', timetable.endTime) || timetable.endTime;
+
+    const payload: any = {
+      roomId: newRoom.trim(),
+      startTime: newStart.trim(),
+      endTime: newEnd.trim()
+    };
+
+    this.directorService.updateTimetable(timetable.id, payload).subscribe({
+      next: () => {
+        this.showMessage('Emploi du temps mis à jour');
+        this.loadTimetables();
+      },
+      error: () => this.showMessage('Erreur lors de la mise à jour')
+    });
+  }
+
+  deleteTimetable(timetable: Timetable) {
+    if (!confirm(`Supprimer l'emploi du temps pour ${timetable.subjectId} ?`)) return;
+    this.directorService.deleteTimetable(timetable.id).subscribe({
+      next: () => {
+        this.showMessage('Emploi du temps supprimé');
+        this.loadTimetables();
+      },
+      error: () => this.showMessage('Erreur lors de la suppression')
+    });
+  }
+
   resolveConflict(conflict: TimetableConflict) {
     // Ouvrir un dialogue pour résoudre le conflit
     this.showMessage('Fonctionnalité de résolution de conflit à implémenter');
   }
 
   createNewTimetable() {
-    // Ouvrir un dialogue pour créer un nouvel emploi du temps
-    this.showMessage('Fonctionnalité de création d\'emploi du temps à implémenter');
+    // Navigate immediately for snappier UX, then fetch groups in background.
+    // Provide an empty initial value so the creator page can render.
+    this.creatorService.setInitialGroups([]);
+    this.creating = true;
+    this.router.navigateByUrl('/director/timetable/create');
+
+    this.directorService.getGroups('dept-1').subscribe({
+      next: (groups) => {
+        this.creatorService.setInitialGroups(groups || []);
+        this.creating = false;
+      },
+      error: (err) => {
+        this.creating = false;
+        this.showMessage('Impossible de récupérer les groupes.');
+      }
+    });
   }
 
   exportTimetable() {

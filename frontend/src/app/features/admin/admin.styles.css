@@ -1,0 +1,62 @@
+/* Shared admin styles - used by all admin components to provide a consistent dashboard look */
+:root{
+  --admin-bg: #f8fafc;
+  --admin-card-bg: #ffffff;
+  --admin-accent:#4f46e5;
+  --admin-muted:#6b7280;
+}
+
+.admin-page {
+  padding: 1.5rem;
+  background: var(--admin-bg);
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  margin-bottom:1rem;
+}
+
+.admin-title {
+  font-size:1.25rem;
+  font-weight:700;
+  color:#111827;
+}
+
+.admin-actions { display:flex; gap:.5rem; }
+
+.admin-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap:1rem; }
+
+.admin-card {
+  background: var(--admin-card-bg);
+  padding:1rem;
+  border-radius:8px;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+  border: 1px solid rgba(15,23,42,0.04);
+}
+
+.admin-card h3{ margin:0 0 .5rem 0; font-size:1rem; color:var(--admin-accent); }
+
+.list-table { width:100%; border-collapse: collapse; }
+.list-table th, .list-table td { text-align:left; padding:.5rem; border-bottom:1px solid #eee; }
+
+.btn { padding:.5rem .75rem; border-radius:6px; border:none; cursor:pointer; }
+.btn-primary{ background:var(--admin-accent); color:white; }
+.btn-ghost{ background:transparent; border:1px solid #e5e7eb; }
+
+/* small utilities used across admin pages */
+.muted{ color:var(--admin-muted); }
+.small{ font-size:.875rem }
+
+@media (max-width:720px){
+  .admin-grid{ grid-template-columns: 1fr; }
+}

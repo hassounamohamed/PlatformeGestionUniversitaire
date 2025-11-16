@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas.user import UserCreate, UserResponse, Token, UserLogin
-from services.auth_service import AuthService
-from db.session import get_db
+# Use package-relative imports so module resolution works when running
+# `uvicorn app.main:app` from the service root.
+from ..schemas.user import UserCreate, UserResponse, Token, UserLogin
+from ..services.auth_service import AuthService
+from ..db.session import get_db
 import logging
+from typing import List
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -169,3 +172,52 @@ async def delete_current_user(
     auth_service = AuthService(db)
     await auth_service.delete_user(current_user["id"])
     return None
+
+
+# --- Admin endpoints (simple helpers for account management) ---
+@router.get('/admin/users', response_model=List[UserResponse])
+async def list_users(db: AsyncSession = Depends(get_db)):
+    """Retourne la liste des utilisateurs (admin view)."""
+    # simple raw query and mapping to dicts that match UserResponse
+    result = await db.execute("SELECT id, email, username, full_name, role, is_active, is_superuser, created_at, updated_at FROM users ORDER BY created_at DESC")
+    rows = result.fetchall()
+    users = []
+    for r in rows:
+        users.append({
+            'id': r[0],
+            'email': r[1],
+            'username': r[2],
+            'full_name': r[3],
+            'role': r[4],
+            'is_active': bool(r[5]),
+            'is_superuser': bool(r[6]),
+            'created_at': r[7],
+            'updated_at': r[8]
+        })
+    return users
+
+
+@router.put('/admin/{user_id}/approve', response_model=UserResponse)
+async def approve_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Set is_active = True for a given user"""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Utilisateur non trouvé')
+    user.is_active = True
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@router.put('/admin/{user_id}/reject', response_model=UserResponse)
+async def reject_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Set is_active = False for a given user (soft reject)"""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Utilisateur non trouvé')
+    user.is_active = False
+    await db.commit()
+    await db.refresh(user)
+    return user

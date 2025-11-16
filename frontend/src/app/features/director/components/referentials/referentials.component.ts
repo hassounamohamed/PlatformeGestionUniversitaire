@@ -6,10 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { DirectorService } from '../../services/director.service';
+import { GroupFormDialogComponent } from './group-form-dialog.component';
 import { Subject, Group } from '../../models/director.models';
 import { FilterPipe } from '../../pipes/filter.pipe';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
@@ -31,7 +33,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatSnackBarModule,
     MatMenuModule,
     MatChipsModule,
-    FilterPipe,
+  FilterPipe,
     MatProgressSpinnerModule,
     MatDividerModule,
     MatProgressBarModule
@@ -50,7 +52,8 @@ export class ReferentialsComponent implements OnInit {
   constructor(
     private directorService: DirectorService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -151,11 +154,56 @@ export class ReferentialsComponent implements OnInit {
 
   // Subject Management
   createSubject() {
-    this.showMessage('Dialogue de création de matière à implémenter');
+    // Quick-create using prompts to avoid adding a full subject form component
+    const name = prompt('Nom de la matière:');
+    if (!name) return;
+    const code = prompt('Code de la matière:', 'NEWCODE') || '';
+    const creditsStr = prompt('Crédits (nombre):', '3') || '3';
+    const semesterStr = prompt('Semestre (nombre):', '1') || '1';
+    const credits = parseInt(creditsStr, 10) || 0;
+    const semester = parseInt(semesterStr, 10) || 1;
+
+    const payload: any = {
+      name: name.trim(),
+      code: code.trim(),
+      credits,
+      semester,
+      departmentId: 'dept-1'
+    };
+
+    this.directorService.createSubject(payload).subscribe({
+      next: () => {
+        this.showMessage('Matière créée avec succès');
+        this.loadSubjects();
+      },
+      error: () => this.showMessage('Erreur lors de la création de la matière')
+    });
   }
 
   editSubject(subject: Subject) {
-    this.showMessage(`Édition de la matière: ${subject.name}`);
+    // Simple inline edit via prompts for demo purposes
+    const name = prompt('Nom de la matière:', subject.name);
+    if (name === null) return;
+    const code = prompt('Code de la matière:', subject.code) || subject.code;
+    const creditsStr = prompt('Crédits (nombre):', String(subject.credits)) || String(subject.credits);
+    const semesterStr = prompt('Semestre (nombre):', String(subject.semester)) || String(subject.semester);
+    const credits = parseInt(creditsStr, 10) || subject.credits;
+    const semester = parseInt(semesterStr, 10) || subject.semester;
+
+    const payload: any = {
+      name: name.trim(),
+      code: code.trim(),
+      credits,
+      semester
+    };
+
+    this.directorService.updateSubject(subject.id, payload).subscribe({
+      next: () => {
+        this.showMessage('Matière mise à jour');
+        this.loadSubjects();
+      },
+      error: () => this.showMessage('Erreur lors de la mise à jour')
+    });
   }
 
   deleteSubject(subject: Subject) {
@@ -174,11 +222,45 @@ export class ReferentialsComponent implements OnInit {
 
   // Group Management
   createGroup() {
-    this.showMessage('Dialogue de création de groupe à implémenter');
+    // Open the GroupFormDialog and create the group when closed
+    const dialogRef = this.dialog.open(GroupFormDialogComponent, {
+      width: '420px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
+      this.directorService.createGroup(result).subscribe({
+        next: () => {
+          this.showMessage('Groupe créé avec succès');
+          this.loadGroups();
+        },
+        error: () => this.showMessage('Erreur lors de la création du groupe')
+      });
+    });
   }
 
   editGroup(group: Group) {
-    this.showMessage(`Édition du groupe: ${group.name}`);
+    // Simple inline edit via prompts; using dialog would require adapting GroupFormDialog to accept data
+    const name = prompt('Nom du groupe:', group.name);
+    if (name === null) return;
+    const code = prompt('Code du groupe:', group.code) || group.code;
+    const semesterStr = prompt('Semestre (nombre):', String(group.semester)) || String(group.semester);
+    const maxCapacityStr = prompt('Capacité maximale:', String(group.maxCapacity)) || String(group.maxCapacity);
+
+    const payload: any = {
+      name: name.trim(),
+      code: code.trim(),
+      semester: parseInt(semesterStr, 10) || group.semester,
+      maxCapacity: parseInt(maxCapacityStr, 10) || group.maxCapacity
+    };
+
+    this.directorService.updateGroup(group.id, payload).subscribe({
+      next: () => {
+        this.showMessage('Groupe mis à jour');
+        this.loadGroups();
+      },
+      error: () => this.showMessage('Erreur lors de la mise à jour du groupe')
+    });
   }
 
   deleteGroup(group: Group) {
@@ -197,6 +279,20 @@ export class ReferentialsComponent implements OnInit {
 
   viewGroupDetails(group: Group) {
     this.showMessage(`Détails du groupe: ${group.name}`);
+  }
+
+  viewSubjectDetails(subject: Subject) {
+    this.showMessage(`Détails de la matière: ${subject.name} (${subject.code})`);
+  }
+
+  manageGroupStudents(group: Group) {
+    // Placeholder: navigate to a student management page or show a message
+    this.showMessage(`Gérer les étudiants pour ${group.name} (à implémenter)`);
+  }
+
+  openGroupTimetable(group: Group) {
+    // Placeholder: navigate to group timetable view
+    this.showMessage(`Ouvrir emploi du temps pour ${group.name} (à implémenter)`);
   }
 
   getCapacityColor(group: Group): string {

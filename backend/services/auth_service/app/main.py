@@ -1,13 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import logging_config
+# use relative imports inside the `app` package so running
+# `uvicorn app.main:app` resolves local modules correctly
+from . import logging_config
 # Central logging configuration shared across services
 from fastapi import FastAPI
 
 app = FastAPI()
 
-from api import auth
-from db.init_db import init_db
+from .api import auth
+from .db.init_db import init_db
 
 app = FastAPI(
     title="Auth Service",

@@ -69,6 +69,18 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .btn.primary { background:#3b82f6; color:white; }
 .btn.outline { background: transparent; border:1px solid #cbd5e1; }
 
+/* Compatibility and semantic variants used across admin components */
+/* Support both "btn-primary" (hyphen) and "btn primary" (two classes) styles */
+.btn-primary, .btn.primary { background:#3b82f6; color:white; }
+.btn-primary:hover:not(:disabled), .btn.primary:hover:not(:disabled) { filter: brightness(0.95); }
+.btn-secondary, .btn.secondary { background:#e5e7eb; color:#374151; }
+.btn-secondary:hover, .btn.secondary:hover { filter: brightness(0.98); }
+.btn-danger, .btn.danger { background:#ef4444; color:white; }
+.btn-danger:hover:not(:disabled), .btn.danger:hover:not(:disabled) { filter: brightness(0.9); }
+
+/* Disabled state */
+.btn:disabled, .btn[disabled], .btn-primary:disabled, .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
 @media (max-width: 480px) {
 	.modal { width: 100%; }
 	.modal-footer { flex-direction: column-reverse; gap: 0.5rem; }

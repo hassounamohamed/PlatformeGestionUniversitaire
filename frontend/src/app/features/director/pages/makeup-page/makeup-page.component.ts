@@ -37,12 +37,6 @@ import { MakeupSession } from '../../models/director.models';
           <h1>Gestion des Rattrapages</h1>
           <p class="subtitle">Approuver et organiser les séances de rattrapage</p>
           
-          <div class="header-actions">
-            <button mat-raised-button color="primary" (click)="createMakeupSession()">
-              <mat-icon>add</mat-icon>
-              Programmer Rattrapage
-            </button>
-          </div>
         </div>
       </div>
 
@@ -119,11 +113,11 @@ import { MakeupSession } from '../../models/director.models';
                         <mat-icon color="warn">close</mat-icon>
                         <span>Rejeter</span>
                       </button>
-                      <button mat-menu-item>
+                      <button mat-menu-item (click)="editSession(session)">
                         <mat-icon>edit</mat-icon>
                         <span>Modifier</span>
                       </button>
-                      <button mat-menu-item>
+                      <button mat-menu-item (click)="viewSession(session)">
                         <mat-icon>visibility</mat-icon>
                         <span>Détails</span>
                       </button>
@@ -176,7 +170,7 @@ export class MakeupPageComponent implements OnInit {
             groupId: 'L1-INFO-A',
             teacherId: 'prof-martin',
             originalDate: new Date('2025-01-10T10:00:00'),
-            makeupDate: new Date('2025-01-15T14:00:00'),
+            makeupDate: new Date('2025-01-15T14:30:00'),
             reason: 'Enseignant malade',
             status: 'REQUESTED',
             roomId: 'A201',
@@ -228,6 +222,26 @@ export class MakeupPageComponent implements OnInit {
 
   createMakeupSession() {
     this.showMessage('Fonctionnalité de création de rattrapage à implémenter');
+  }
+
+  editSession(session: MakeupSession) {
+    // Minimal edit flow: allow changing the makeup date via prompt for demo
+    const current = session.makeupDate ? new Date(session.makeupDate).toISOString().slice(0,16) : '';
+    const newDateStr = prompt('Nouvelle date de rattrapage (YYYY-MM-DDTHH:mm):', current);
+    if (newDateStr === null) return;
+    const newDate = new Date(newDateStr);
+    if (isNaN(newDate.getTime())) {
+      this.showMessage('Date invalide');
+      return;
+    }
+    // No update endpoint implemented; show message and locally update for UX
+    session.makeupDate = newDate;
+    this.showMessage('Date modifiée (localement)');
+  }
+
+  viewSession(session: MakeupSession) {
+    const details = `Matière: ${session.subjectId}\nGroupe: ${session.groupId}\nEnseignant: ${session.teacherId}\nDate rattrapage: ${session.makeupDate}`;
+    this.showMessage(details);
   }
 
   getStatusColor(status: string): string {

@@ -124,24 +124,24 @@ export class TeacherDashboardComponent implements OnInit {
       subject: 'Algorithmique',
       group: 'L1 Info B',
       room: '205',
-      startTime: '10:15',
-      endTime: '11:45'
+      startTime: '10:10',
+      endTime: '11:40'
     },
     {
       id: '3',
       subject: 'Base de Données',
       group: 'L2 Info A',
       room: '103',
-      startTime: '14:00',
-      endTime: '15:30'
+      startTime: '14:30',
+      endTime: '16:00'
     },
     {
       id: '4',
       subject: 'Programmation Web',
       group: 'L3 Info',
       room: '201',
-      startTime: '15:45',
-      endTime: '17:15'
+      startTime: '16:10',
+      endTime: '17:40'
     }
   ];
 

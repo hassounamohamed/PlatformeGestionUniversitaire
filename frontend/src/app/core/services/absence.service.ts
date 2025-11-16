@@ -17,22 +17,24 @@ export class AbsenceService {
 
   // Get all absences from backend. Filtering by student is done client-side using etudiant_id
   listAbsences(): Observable<AbsenceDto[]> {
-    return this.api.get<AbsenceDto[]>('/absences');
+    // Direct call to absence service (local dev port 8007)
+    return this.api.get<AbsenceDto[]>('http://127.0.0.1:8007/absences');
   }
 
   getAbsence(id: number) {
-    return this.api.get<AbsenceDto>(`/absences/${id}`);
+    return this.api.get<AbsenceDto>(`http://127.0.0.1:8007/absences/${id}`);
   }
 
   createAbsence(payload: Partial<AbsenceDto>) {
-    return this.api.post<AbsenceDto>('/absences', payload);
+    return this.api.post<AbsenceDto>('http://127.0.0.1:8007/absences', payload);
   }
 
   updateAbsence(id: number, patch: Partial<AbsenceDto>) {
-    return this.api.put<AbsenceDto>(`/absences/${id}`, patch);
+    // Backend exposes PATCH for partial updates
+    return this.api.patch<AbsenceDto>(`http://127.0.0.1:8007/absences/${id}`, patch);
   }
 
   deleteAbsence(id: number) {
-    return this.api.delete<AbsenceDto>(`/absences/${id}`);
+    return this.api.delete<AbsenceDto>(`http://127.0.0.1:8007/absences/${id}`);
   }
 }

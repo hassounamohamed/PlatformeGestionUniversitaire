@@ -28,3 +28,36 @@ def read_one(stat_id: int, db: Session = Depends(get_db)):
 def aggregate(name: str, db: Session = Depends(get_db)):
     agg = compute_basic_aggregate(db, name)
     return {"count": agg.count, "avg": float(agg.avg) if agg.avg is not None else None, "min": agg.min, "max": agg.max}
+
+
+@router.get('/department/{department_id}/stats')
+def department_stats(department_id: int, db: Session = Depends(get_db)):
+    """Return basic counts for a department: students, teachers, absences, rooms occupied (simple counts)."""
+    # Since analytic_service may not own the domain models, try simple raw queries
+    try:
+        students = db.execute("SELECT COUNT(*) FROM students WHERE department_id = :d", {"d": department_id}).scalar()
+    except Exception:
+        students = None
+
+    try:
+        teachers = db.execute("SELECT COUNT(*) FROM teachers WHERE department_id = :d", {"d": department_id}).scalar()
+    except Exception:
+        teachers = None
+
+    try:
+        absences = db.execute("SELECT COUNT(*) FROM absences a JOIN courses c ON a.course_id = c.id WHERE c.department_id = :d", {"d": department_id}).scalar()
+    except Exception:
+        absences = None
+
+    try:
+        rooms = db.execute("SELECT COUNT(DISTINCT room_id) FROM emplois WHERE department_id = :d", {"d": department_id}).scalar()
+    except Exception:
+        rooms = None
+
+    return {
+        "department_id": department_id,
+        "students": int(students) if students is not None else None,
+        "teachers": int(teachers) if teachers is not None else None,
+        "absences": int(absences) if absences is not None else None,
+        "rooms_used": int(rooms) if rooms is not None else None,
+    }
