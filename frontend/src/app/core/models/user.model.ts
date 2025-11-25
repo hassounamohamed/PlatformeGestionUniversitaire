@@ -17,8 +17,11 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  name: string;
-  // Le rôle sera automatiquement 'student' ou assigné par l'admin
+  full_name: string;
+  // Optionnel: le rôle demandé à l'inscription. Par défaut 'etudiant'.
+  role?: 'etudiant' | 'enseignant';
+  // Optional username to satisfy backend schema; if omitted frontend will send a derived value
+  username?: string;
 }
 
 export interface AuthResponse {

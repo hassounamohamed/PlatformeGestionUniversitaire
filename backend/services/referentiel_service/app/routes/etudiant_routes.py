@@ -6,6 +6,7 @@ import csv
 import io
 
 from app.schemas.etudiant import EtudiantCreate, EtudiantRead
+from fastapi import Body
 from app.crud.etudiant_crud import get_etudiant, get_etudiants, create_etudiant, delete_etudiant
 from app.core.database import get_db
 from app.crud.etudiant_crud import update_etudiant
@@ -18,7 +19,34 @@ def list_etudiants(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     return get_etudiants(db, skip=skip, limit=limit)
 
 @router.post("/", response_model=EtudiantRead)
-def create(e: EtudiantCreate, db: Session = Depends(get_db), _=Depends(admin_required)):
+def create(payload: dict = Body(...), db: Session = Depends(get_db), _=Depends(admin_required)):
+    # Accept {name: 'Nom Prenom'} and generate a placeholder email if necessary
+    name = payload.get('nom') or payload.get('name')
+    if not name:
+        raise HTTPException(status_code=422, detail="Missing 'nom' or 'name'")
+    parts = name.split(None, 1)
+    nom = parts[0]
+    prenom = parts[1] if len(parts) > 1 else ''
+    email = payload.get('email') or f"{nom.lower()}.{(prenom or 'student').lower()}@example.com"
+    # coerce numeric ids coming as strings (e.g. from forms) to int when possible
+    def _to_int(val):
+        if val is None:
+            return None
+        if isinstance(val, int):
+            return val
+        if isinstance(val, str):
+            try:
+                return int(val)
+            except Exception:
+                return None
+        try:
+            return int(val)
+        except Exception:
+            return None
+
+    groupe_id = _to_int(payload.get('groupe_id'))
+    specialite_id = _to_int(payload.get('specialite_id'))
+    e = EtudiantCreate(nom=nom, prenom=prenom, email=email, groupe_id=groupe_id, specialite_id=specialite_id)
     return create_etudiant(db, e)
 
 
@@ -68,8 +96,8 @@ def read(etudiant_id: int, db: Session = Depends(get_db)):
     return obj
 
 @router.delete("/{etudiant_id}", response_model=EtudiantRead)
-def delete(e_id: int, db: Session = Depends(get_db)):
-    obj = delete_etudiant(db, e_id)
+def delete(etudiant_id: int, db: Session = Depends(get_db)):
+    obj = delete_etudiant(db, etudiant_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Etudiant not found")
     return obj

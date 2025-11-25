@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ApiService } from '../../../../core/services/api.service';
+import { forkJoin } from 'rxjs';
 
 interface AccountRow {
   id: string;
@@ -18,7 +20,7 @@ interface AccountRow {
   // reuse admin dashboard styles so the page keeps the exact same look
   styleUrls: ['../../pages/admin-dashboard/admin-dashboard.component.css', './accounts-management.component.css']
 })
-export class AccountsManagementComponent {
+export class AccountsManagementComponent implements OnInit {
   // sample data adapted from your React example
   data: AccountRow[] = [
     {
@@ -63,6 +65,12 @@ export class AccountsManagementComponent {
   // search filter string
   filter = '';
 
+  constructor(private api: ApiService) {}
+
+  ngOnInit() {
+    this.loadAccounts();
+  }
+
   get filteredData() {
     const q = this.filter?.trim().toLowerCase();
     if (!q) return this.data;
@@ -93,15 +101,22 @@ export class AccountsManagementComponent {
 
   // example bulk actions (placeholders)
   approveSelected() {
-    // TODO: call backend to approve selected accounts
-    console.log('approve', this.selection);
-    // for now just clear selection
-    this.selection = [];
+    if (this.selection.length === 0) return;
+    const calls = this.selection.map(id => this.api.put(`/auth/admin/${id}/approve`, {}));
+    forkJoin(calls).subscribe({ next: res => { console.log('approved', res); this.loadAccounts(); this.selection = []; }, error: err => { console.error('approve error', err); } });
   }
 
   rejectSelected() {
-    // TODO: call backend to reject selected accounts
-    console.log('reject', this.selection);
-    this.selection = [];
+    if (this.selection.length === 0) return;
+    const calls = this.selection.map(id => this.api.put(`/auth/admin/${id}/reject`, {}));
+    forkJoin(calls).subscribe({ next: res => { console.log('rejected', res); this.loadAccounts(); this.selection = []; }, error: err => { console.error('reject error', err); } });
+  }
+
+  loadAccounts() {
+    this.api.get<any[]>('/auth/admin/users').subscribe({ next: list => {
+      this.data = list.map(u => ({ id: String(u.id), avatar: '', name: u.full_name || u.username, job: u.role || '', email: u.email }));
+      // preserve valid selections
+      this.selection = this.selection.filter(s => this.data.some(d => d.id === s));
+    }, error: err => console.error('Failed loading accounts', err) });
   }
 }

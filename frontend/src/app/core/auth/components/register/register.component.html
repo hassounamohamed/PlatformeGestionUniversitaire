@@ -44,6 +44,17 @@
         </div>
       </div>
 
+      <!-- Role Selection -->
+      <div class="form-group">
+        <label for="role" class="form-label">Vous êtes</label>
+        <div class="input-wrapper">
+          <select id="role" formControlName="role" class="form-input">
+            <option value="etudiant">Étudiant</option>
+            <option value="enseignant">Enseignant</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Email Field -->
       <div class="form-group">
         <label for="email" class="form-label">Email Address</label>
@@ -65,6 +76,8 @@
           <span *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email address</span>
         </div>
       </div>
+
+      
 
       <!-- Password Field -->
       <div class="form-group">
@@ -145,11 +158,14 @@
       <!-- Terms and Conditions -->
       <div class="terms-wrapper">
         <label class="checkbox-wrapper">
-          <input type="checkbox" class="checkbox" required>
+          <input type="checkbox" class="checkbox" formControlName="agree">
           <span class="checkbox-label">
             I agree to the <a href="#" class="link">Terms of Service</a> and <a href="#" class="link">Privacy Policy</a>
           </span>
         </label>
+        <div class="error-message" *ngIf="registerForm.get('agree')?.invalid && registerForm.get('agree')?.touched">
+          Vous devez accepter les conditions pour continuer.
+        </div>
       </div>
 
       <!-- Submit Button -->

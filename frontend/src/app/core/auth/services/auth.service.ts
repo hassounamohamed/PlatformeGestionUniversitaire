@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { User, UserRole, LoginRequest, RegisterRequest, AuthResponse } from '../../models/user.model';
+import { BASE_API } from '../../../app.api';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Point to the local auth service. If you run through the API gateway change to '/api/auth'
-  private readonly API_URL = 'http://localhost:8000/api/auth'; // Adjust if you run the gateway or a different port
+  // Point to the auth endpoint via centralized base. Use '/api' so proxy can forward to backend.
+  private readonly API_URL = `${BASE_API}/auth`;
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
 
@@ -20,6 +21,15 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {}
+
+  /**
+   * Récupère l'utilisateur courant depuis le backend en utilisant le token stocké
+   */
+  me() {
+    const token = this.getToken();
+    const headers = new HttpHeaders({ Authorization: token ? `Bearer ${token}` : '' });
+    return this.http.get<any>(`${this.API_URL}/me`, { headers });
+  }
 
   /**
    * Connexion de l'utilisateur (sans sélection de rôle)
@@ -54,7 +64,7 @@ export class AuthService {
     // Backend register endpoint returns the created user (UserResponse)
     return this.http.post<any>(`${this.API_URL}/register`, {
       ...data,
-      // role: 'student' // backend may assign default role; uncomment if backend expects role
+      // send the requested role (backend will normalize/override if needed)
     });
   }
 
@@ -127,7 +137,8 @@ export class AuthService {
    */
   private normalizeRole(rawRole: string | undefined): any {
     if (!rawRole) return 'student';
-    const r = String(rawRole).toLowerCase();
+    // Normalize common variants: replace spaces with underscore and lowercase
+    const r = String(rawRole).toLowerCase().replace(/\s+/g, '_');
     switch (r) {
       case 'etudiant':
       case 'student':
@@ -137,6 +148,11 @@ export class AuthService {
         return 'teacher';
       case 'directeur':
       case 'director':
+      case 'chef_de_departement':
+      case 'chef_departement':
+      case 'chef_de_dept':
+      case 'chef':
+        // Treat department head as director-level for routing purposes
         return 'director';
       case 'admin':
       case 'administrator':

@@ -120,7 +120,7 @@
               <div class="ev-info">
                 <div class="ev-title">
                   {{ ev.title }}
-                  <span class="event-badge" [class]="getEventType(ev.title)">{{ getEventType(ev.title) }}</span>
+                  <span [ngClass]="['event-badge', ev.type || getEventType(ev.title)]">{{ eventTypeLabel(ev.type || getEventType(ev.title)) }}</span>
                 </div>
                 <div class="ev-desc">{{ ev.location }}</div>
               </div>

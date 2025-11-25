@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginRequest } from '../../../models/user.model';
 
@@ -22,13 +22,23 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+
+    // Show a friendly message if redirected after registration and pending approval
+    this.route.queryParams.subscribe(params => {
+      if (params['pending'] === 'true') {
+        this.errorMessage = 'Votre compte est créé et en attente de validation par un administrateur.';
+      } else if (params['registered'] === 'true') {
+        this.errorMessage = 'Inscription réussie. Vous pourrez vous connecter une fois le compte activé.';
+      }
     });
   }
 
@@ -52,7 +62,13 @@ export class LoginComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || 'Invalid email or password';
+          // Backend returns error detail in `detail` (FastAPI) or `message` in other cases
+          // If backend returns 403 for pending approval, show a clear message
+          if (error.status === 403) {
+            this.errorMessage = 'Votre compte est en attente d\'approbation par un administrateur.';
+          } else {
+            this.errorMessage = error.error?.detail || error.error?.message || 'Invalid email or password';
+          }
           this.isLoading = false;
         }
       });

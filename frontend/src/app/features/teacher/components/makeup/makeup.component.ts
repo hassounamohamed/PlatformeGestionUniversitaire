@@ -12,6 +12,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { RattrapageService } from '../../../../core/services/rattrapage.service';
 
 interface Course {
   id: string;
@@ -114,8 +115,8 @@ export class MakeupComponent implements OnInit {
       subject: 'Mathématiques Appliquées',
       group: 'L2 Info A',
       date: new Date('2025-10-19'),
-      startTime: '14:00',
-      endTime: '15:30',
+      startTime: '14:30',
+      endTime: '16:00',
       room: '101',
       type: 'lecture',
       reason: 'Rattrapage cours annulé pour absence médicale',
@@ -126,8 +127,8 @@ export class MakeupComponent implements OnInit {
       subject: 'Base de Données',
       group: 'L2 Info A',
       date: new Date('2025-10-05'),
-      startTime: '10:15',
-      endTime: '11:45',
+      startTime: '10:10',
+      endTime: '11:40',
       room: '103',
       type: 'tp',
       reason: 'Rattrapage TP annulé pour panne technique',
@@ -158,7 +159,7 @@ export class MakeupComponent implements OnInit {
     }
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private rattrapageService: RattrapageService) {
     this.makeupForm = this.fb.group({
       courseId: ['', Validators.required],
       date: ['', Validators.required],
@@ -179,15 +180,48 @@ export class MakeupComponent implements OnInit {
   submitMakeup(): void {
     if (this.makeupForm.valid) {
       this.isSubmitting = true;
-      
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Makeup session created:', this.makeupForm.value);
-        this.isSubmitting = false;
-        this.resetMakeupForm();
-        // Show success message and redirect to "Mes Rattrapages" tab
-        this.selectedTab = 1;
-      }, 2000);
+
+      // Build payload expected by backend RattrapageCreate
+      const form = this.makeupForm.value;
+      // format date to YYYY-MM-DD
+      const dateObj: Date = form.date instanceof Date ? form.date : new Date(form.date);
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+
+      // ensure times are HH:MM:SS
+      const toTime = (t: string) => {
+        if (!t) return '00:00:00';
+        const parts = t.split(':');
+        if (parts.length === 1) return `${parts[0].padStart(2, '0')}:00:00`;
+        if (parts.length === 2) return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:00`;
+        return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:${parts[2].padStart(2, '0')}`;
+      };
+
+      const payload = {
+        // absence_id is required by backend; if you have an absence to link, set it here.
+        // For now we set 0 which the backend may accept; consider updating UI to select an absence.
+        absence_id: 0,
+        date: dateStr,
+        heure_debut: toTime(form.startTime),
+        heure_fin: toTime(form.endTime),
+        salle_id: Number(form.room) || null
+      };
+
+      this.rattrapageService.createRattrapage(payload).subscribe({
+        next: (res) => {
+          console.log('Makeup session created (backend):', res);
+          this.isSubmitting = false;
+          this.resetMakeupForm();
+          this.selectedTab = 1;
+        },
+        error: (err) => {
+          console.error('Failed to create rattrapage:', err);
+          this.isSubmitting = false;
+          // keep form state so user can retry; optionally show a message using a notification service
+        }
+      });
     }
   }
 

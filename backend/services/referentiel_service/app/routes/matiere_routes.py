@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.schemas.matiere import MatiereCreate, MatiereRead
+from fastapi import Body
 from app.crud.matiere_crud import get_matiere, get_matieres, create_matiere, delete_matiere
 from app.core.database import get_db
 from app.schemas.matiere import MatiereUpdate
@@ -15,7 +16,12 @@ def list_matieres(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     return get_matieres(db, skip=skip, limit=limit)
 
 @router.post("/", response_model=MatiereRead)
-def create(m: MatiereCreate, db: Session = Depends(get_db)):
+def create(payload: dict = Body(...), db: Session = Depends(get_db)):
+    # Accept {name: ...} or {nom: ...}
+    nom = payload.get('nom') or payload.get('name')
+    if not nom:
+        raise HTTPException(status_code=422, detail="Missing 'nom' or 'name'")
+    m = MatiereCreate(nom=nom, niveau_id=payload.get('niveau_id'), enseignant_id=payload.get('enseignant_id'))
     return create_matiere(db, m)
 
 @router.get("/{matiere_id}", response_model=MatiereRead)
@@ -26,8 +32,8 @@ def read(matiere_id: int, db: Session = Depends(get_db)):
     return obj
 
 @router.delete("/{matiere_id}", response_model=MatiereRead)
-def delete(m_id: int, db: Session = Depends(get_db)):
-    obj = delete_matiere(db, m_id)
+def delete(matiere_id: int, db: Session = Depends(get_db)):
+    obj = delete_matiere(db, matiere_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Matiere not found")
     return obj

@@ -10,6 +10,9 @@ class Etudiant(Base):
     nom = Column(String, nullable=False)
     prenom = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    groupe_id = Column(Integer, nullable=True)
-    specialite_id = Column(Integer, nullable=True)
+    groupe_id = Column(Integer, ForeignKey("groupes.id"), nullable=True)
+    specialite_id = Column(Integer, ForeignKey("matieres.id"), nullable=True)
+    
+    # Relations
+    groupe = relationship("Groupe", back_populates="etudiants")
 

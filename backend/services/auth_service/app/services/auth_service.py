@@ -6,9 +6,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.user import User
-from schemas.user import UserCreate, TokenData
-from config import settings
+# package-relative imports
+from ..models.user import User
+from ..schemas.user import UserCreate, TokenData
+from ..config import settings
 import logging
 
 # Configuration de la sécurité
@@ -68,12 +69,19 @@ class AuthService:
         role = getattr(user_data, "role", "etudiant").lower()
         is_superuser = role == "admin"
 
+        # Normalize role to lowercase French labels used in DB (e.g. 'etudiant', 'enseignant')
+        role_value = getattr(user_data, "role", "etudiant")
+        if isinstance(role_value, str):
+            role_value = role_value.lower()
+
         db_user = User(
             email=user_data.email,
-            username=user_data.username,
+            username=getattr(user_data, "username", user_data.email.split('@')[0]),
             hashed_password=hashed_password,
-            full_name=user_data.full_name,
-            role=getattr(user_data, "role", "etudiant"),
+            full_name=getattr(user_data, "full_name", getattr(user_data, "name", None)),
+            role=role_value,
+            # For local development make new registrations active by default so login works immediately.
+            # In production change this to require admin approval.
             is_active=True,
             is_superuser=is_superuser
         )
@@ -102,13 +110,24 @@ class AuthService:
     async def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """Authentifie un utilisateur"""
         user = await self.get_user_by_email(email)
-
         if not user:
+            # Log at debug level to help troubleshooting failed logins without exposing passwords
+            self.logger.debug("authenticate_user: user not found for email=%s", email)
             return None
 
-        if not self.verify_password(password, user.hashed_password):
+        password_ok = self.verify_password(password, user.hashed_password)
+        if not password_ok:
+            # Log failed password attempt (do NOT log the provided password)
+            self.logger.info("authenticate_user: invalid password for email=%s", email)
             return None
 
+        # If the account exists but is not active yet, return the user object so
+        # the API layer can return a specific message (account pending approval)
+        if not user.is_active:
+            self.logger.info("authenticate_user: account inactive for email=%s", email)
+            return user
+
+        self.logger.info("authenticate_user: success for email=%s", email)
         return user
 
     @staticmethod
@@ -131,7 +150,7 @@ class AuthService:
             token: str = Depends(oauth2_scheme)
     ) -> dict:
         """Récupère l'utilisateur actuel à partir du token"""
-        from db.session import get_db
+        from ..db.session import get_db
 
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -153,7 +172,7 @@ class AuthService:
             raise credentials_exception
 
         # Créer une session temporaire pour vérifier l'utilisateur
-        from db.session import AsyncSessionLocal
+        from ..db.session import AsyncSessionLocal
         async with AsyncSessionLocal() as db:
             auth_service = AuthService(db)
             user = await auth_service.get_user_by_email(email=token_data.email)

@@ -45,8 +45,8 @@ export class TimetableManagementComponent implements OnInit {
   
   daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
   timeSlots = [
-    '08:00-09:30', '09:45-11:15', '11:30-13:00', 
-    '14:00-15:30', '15:45-17:15', '17:30-19:00'
+    '08:30-10:00', '10:10-11:40', '11:50-13:20',
+    '14:30-16:00', '16:10-17:40'
   ];
 
   weeklyView: any[][] = [];

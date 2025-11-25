@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas.user import UserCreate, UserResponse, Token, UserLogin
-from services.auth_service import AuthService
-from db.session import get_db
+# Use package-relative imports so module resolution works when running
+# `uvicorn app.main:app` from the service root.
+from ..schemas.user import UserCreate, UserResponse, Token, UserLogin
+from ..services.auth_service import AuthService
+from ..db.session import get_db
 import logging
+from typing import List
+from sqlalchemy import text
+from ..config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -47,6 +52,16 @@ async def register(
             detail="Erreur interne lors de la création de l'utilisateur"
         )
 
+    # Ensure the created user is active for local development (so they can log in immediately).
+    # This mirrors the dev-friendly behavior in AuthService.create_user. In production remove this.
+    try:
+        user.is_active = True
+        await db.commit()
+        await db.refresh(user)
+    except Exception:
+        # Non-critical if commit fails here; user may already be active.
+        pass
+
     # Log confirmation
     try:
         logger.info("Nouvel utilisateur enregistré: id=%s email=%s username=%s", user.id, user.email, user.username)
@@ -77,6 +92,14 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou mot de passe incorrect",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # If user is found but not active, return an explicit error so frontend
+    # can show a friendly 'pending approval' message.
+    if not getattr(user, 'is_active', True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte en attente de validation par un administrateur",
         )
 
     # Générer le token
@@ -169,3 +192,77 @@ async def delete_current_user(
     auth_service = AuthService(db)
     await auth_service.delete_user(current_user["id"])
     return None
+
+
+# --- Admin endpoints (simple helpers for account management) ---
+@router.get('/admin/users', response_model=List[UserResponse])
+async def list_users(db: AsyncSession = Depends(get_db)):
+    """Retourne la liste des utilisateurs (admin view)."""
+    # simple raw query and mapping to dicts that match UserResponse
+    result = await db.execute(text("SELECT id, email, username, full_name, role, is_active, is_superuser, created_at, updated_at FROM users ORDER BY created_at DESC"))
+    rows = result.fetchall()
+    users = []
+    for r in rows:
+        users.append({
+            'id': r[0],
+            'email': r[1],
+            'username': r[2],
+            'full_name': r[3],
+            'role': r[4],
+            'is_active': bool(r[5]),
+            'is_superuser': bool(r[6]),
+            'created_at': r[7],
+            'updated_at': r[8]
+        })
+    return users
+
+
+@router.put('/admin/{user_id}/approve', response_model=UserResponse)
+async def approve_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Set is_active = True for a given user"""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Utilisateur non trouvé')
+    user.is_active = True
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@router.put('/admin/{user_id}/reject', response_model=UserResponse)
+async def reject_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Set is_active = False for a given user (soft reject)"""
+    auth_service = AuthService(db)
+    user = await auth_service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Utilisateur non trouvé')
+    user.is_active = False
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+# Development helper: mint a token for a given username/email when DEBUG is True.
+# This endpoint is intentionally only enabled in debug mode and should be removed
+# or protected before deploying to production.
+@router.get('/debug/token/{username}')
+async def debug_token(username: str, db: AsyncSession = Depends(get_db)):
+    if not getattr(settings, 'DEBUG', False):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not found')
+
+    auth_service = AuthService(db)
+    # Try by username first, then by email
+    user = await auth_service.get_user_by_username(username)
+    if not user:
+        user = await auth_service.get_user_by_email(username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Utilisateur non trouvé')
+
+    # Ensure active for dev convenience
+    user.is_active = True
+    await db.commit()
+    await db.refresh(user)
+
+    token = auth_service.create_access_token(data={"sub": user.email, "id": user.id})
+    return {"access_token": token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "username": user.username}}

@@ -16,7 +16,6 @@ def list_salles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=SalleRead)
 def create(s: SalleCreate, db: Session = Depends(get_db)):
-    existing = db.query().filter
     return create_salle(db, s)
 
 

@@ -170,7 +170,7 @@ export class MakeupPageComponent implements OnInit {
             groupId: 'L1-INFO-A',
             teacherId: 'prof-martin',
             originalDate: new Date('2025-01-10T10:00:00'),
-            makeupDate: new Date('2025-01-15T14:00:00'),
+            makeupDate: new Date('2025-01-15T14:30:00'),
             reason: 'Enseignant malade',
             status: 'REQUESTED',
             roomId: 'A201',

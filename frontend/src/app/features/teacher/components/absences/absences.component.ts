@@ -11,6 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
+import { AbsenceService, AbsenceDto } from '../../../../core/services/absence.service';
+import { AuthService } from '../../../../core/auth/services/auth.service';
 
 interface Course {
   id: string;
@@ -74,84 +76,27 @@ export class AbsencesComponent implements OnInit {
       id: '2',
       subject: 'Algorithmique',
       group: 'L1 Info B',
-      time: '10:15 - 11:45'
+      time: '10:10 - 11:40'
     },
     {
       id: '3',
       subject: 'Base de Données',
       group: 'L2 Info A',
-      time: '14:00 - 15:30'
+      time: '14:30 - 16:00'
     },
     {
       id: '4',
       subject: 'Programmation Web',
       group: 'L3 Info',
-      time: '15:45 - 17:15'
+      time: '16:10 - 17:40'
     }
   ];
 
-  myAbsences: Absence[] = [
-    {
-      id: '1',
-      date: new Date('2025-10-08'),
-      startTime: '08:30',
-      endTime: '10:00',
-      course: 'Mathématiques Appliquées - L2 Info A',
-      reason: 'medical',
-      comment: 'Consultation médicale urgente',
-      status: 'approved',
-      hasJustification: true
-    },
-    {
-      id: '2',
-      date: new Date('2025-10-10'),
-      startTime: '14:00',
-      endTime: '15:30',
-      course: 'Base de Données - L2 Info A',
-      reason: 'transport',
-      comment: 'Panne de voiture',
-      status: 'pending'
-    }
-  ];
+  myAbsences: Absence[] = [];
 
-  pendingStudentAbsences: StudentAbsence[] = [
-    {
-      id: '1',
-      studentName: 'Ahmed Ben Ali',
-      date: new Date('2025-10-09'),
-      startTime: '08:30',
-      endTime: '10:00',
-      course: 'Mathématiques Appliquées - L2 Info A',
-      reason: 'medical',
-      comment: 'Rendez-vous médical',
-      status: 'pending',
-      hasJustification: true
-    },
-    {
-      id: '2',
-      studentName: 'Fatma Gharbi',
-      date: new Date('2025-10-10'),
-      startTime: '10:15',
-      endTime: '11:45',
-      course: 'Algorithmique - L1 Info B',
-      reason: 'family',
-      comment: 'Événement familial important',
-      status: 'pending',
-      hasJustification: false
-    },
-    {
-      id: '3',
-      studentName: 'Mohamed Triki',
-      date: new Date('2025-10-11'),
-      startTime: '14:00',
-      endTime: '15:30',
-      course: 'Base de Données - L2 Info A',
-      reason: 'transport',
-      status: 'pending'
-    }
-  ];
+  pendingStudentAbsences: StudentAbsence[] = [];
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private absenceService: AbsenceService, private auth: AuthService) {
     this.absenceForm = this.fb.group({
       date: ['', Validators.required],
       startTime: ['', Validators.required],
@@ -163,7 +108,31 @@ export class AbsencesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load initial data
+    this.loadAbsences();
+  }
+
+  private loadAbsences(): void {
+    this.absenceService.listAbsences().subscribe({
+      next: (res: AbsenceDto[]) => {
+        // teacher sees own absences + pending student absences (filter by statut)
+        this.myAbsences = [];
+        this.pendingStudentAbsences = res
+          .filter(r => (r.statut || '').toLowerCase() === 'pending')
+          .map(r => ({
+            id: String(r.id),
+            studentName: `student-${r.etudiant_id}`,
+            date: new Date(),
+            startTime: '',
+            endTime: '',
+            course: '',
+            reason: r.motif || '',
+            comment: '',
+            status: 'pending',
+            hasJustification: false
+          } as StudentAbsence));
+      },
+      error: (err: any) => console.error('Failed loading absences for teacher', err)
+    });
   }
 
   onTabChange(event: any): void {
@@ -180,14 +149,27 @@ export class AbsencesComponent implements OnInit {
   submitAbsence(): void {
     if (this.absenceForm.valid) {
       this.isSubmitting = true;
-      
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Absence submitted:', this.absenceForm.value);
-        this.isSubmitting = false;
-        this.resetForm();
-        // Show success message
-      }, 2000);
+      const user = this.auth.getCurrentUser();
+      const etudiant_id = user ? (user as any).id : 0;
+      const payload = {
+        etudiant_id: etudiant_id,
+        emploi_id: this.absenceForm.value.courseId ? Number(this.absenceForm.value.courseId) : null,
+        motif: this.absenceForm.value.reason || null,
+        statut: 'pending'
+      };
+
+      this.absenceService.createAbsence(payload).subscribe({
+        next: res => {
+          console.log('Absence created', res);
+          this.isSubmitting = false;
+          this.resetForm();
+          this.loadAbsences();
+        },
+        error: err => {
+          console.error('Failed creating absence', err);
+          this.isSubmitting = false;
+        }
+      });
     }
   }
 
@@ -207,18 +189,27 @@ export class AbsencesComponent implements OnInit {
   }
 
   cancelAbsence(absenceId: string): void {
-    console.log('Cancel absence:', absenceId);
-    // Remove from myAbsences array or update status
+    const id = Number(absenceId);
+    this.absenceService.deleteAbsence(id).subscribe({
+      next: () => this.loadAbsences(),
+      error: err => console.error('Failed cancelling absence', err)
+    });
   }
 
   approveAbsence(absenceId: string): void {
-    console.log('Approve absence:', absenceId);
-    // Update absence status to approved
+    const id = Number(absenceId);
+    this.absenceService.updateAbsence(id, { statut: 'validated' }).subscribe({
+      next: () => this.loadAbsences(),
+      error: err => console.error('Failed approving absence', err)
+    });
   }
 
   rejectAbsence(absenceId: string): void {
-    console.log('Reject absence:', absenceId);
-    // Update absence status to rejected
+    const id = Number(absenceId);
+    this.absenceService.updateAbsence(id, { statut: 'rejected' }).subscribe({
+      next: () => this.loadAbsences(),
+      error: err => console.error('Failed rejecting absence', err)
+    });
   }
 
   viewJustification(absenceId: string): void {

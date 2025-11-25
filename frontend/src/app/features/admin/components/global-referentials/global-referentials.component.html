@@ -30,6 +30,58 @@
         </div>
       </div>
 
+      <div class="panel-add" *ngIf="showAddForm">
+        <form (ngSubmit)="submitAdd()" class="add-form">
+          <div *ngIf="activeSection.key === 'departments' || activeSection.key === 'specialties' || activeSection.key === 'subjects'">
+            <label>Nom</label>
+            <input [(ngModel)]="formModel.nom" name="nom" required />
+            <!-- When adding a specialty or subject allow selecting a department -->
+            <div *ngIf="activeSection.key === 'specialties'" style="margin-top:8px;">
+              <label>Département</label>
+              <select [(ngModel)]="formModel.departement_id" name="departement_id">
+                <option [ngValue]="null">-- Aucun --</option>
+                <option *ngFor="let d of sections[0].items" [value]="d.id">{{d['nom'] || d.name}}</option>
+              </select>
+            </div>
+          </div>
+
+          <div *ngIf="activeSection.key === 'teachers' || activeSection.key === 'students'">
+            <label>Nom</label>
+            <input [(ngModel)]="formModel.nom" name="nom" required />
+            <label>Prénom</label>
+            <input [(ngModel)]="formModel.prenom" name="prenom" />
+            <label>Email</label>
+            <input [(ngModel)]="formModel.email" name="email" type="email" />
+            <label *ngIf="activeSection.key === 'teachers'">Département</label>
+            <select *ngIf="activeSection.key === 'teachers'" [(ngModel)]="formModel.departement_id" name="departement_id">
+              <option [ngValue]="null">-- Aucun --</option>
+              <option *ngFor="let d of sections[0].items" [value]="d.id">{{d['nom'] || d.name}}</option>
+            </select>
+            <label *ngIf="activeSection.key === 'students'">Groupe ID</label>
+            <input *ngIf="activeSection.key === 'students'" [(ngModel)]="formModel.groupe_id" name="groupe_id" type="text" />
+            <label *ngIf="activeSection.key === 'students'">Spécialité ID</label>
+            <select *ngIf="activeSection.key === 'students'" [(ngModel)]="formModel.specialite_id" name="specialite_id">
+              <option [ngValue]="null">-- Aucun --</option>
+              <option *ngFor="let s of sections[1].items" [value]="s.id">{{s['nom'] || s.name}}</option>
+            </select>
+          </div>
+
+          <div *ngIf="activeSection.key === 'rooms'">
+            <label>Code</label>
+            <input [(ngModel)]="formModel.code" name="code" required />
+            <label>Type</label>
+            <input [(ngModel)]="formModel.type" name="type" />
+            <label>Capacité</label>
+            <input [(ngModel)]="formModel.capacite" name="capacite" type="number" />
+          </div>
+
+          <div class="add-actions">
+            <button class="btn primary" type="submit">Créer</button>
+            <button class="btn" type="button" (click)="cancelAdd()">Annuler</button>
+          </div>
+        </form>
+      </div>
+
       <div class="panel-body">
         <table class="referentials-table">
           <thead>
@@ -38,7 +90,7 @@
           <tbody>
             <tr *ngFor="let item of activeSection.items; let i = index">
               <td>{{i + 1}}</td>
-              <td>{{item.name || item.title || item.email || item.label}}</td>
+              <td>{{item['nom'] || item.name || item['code'] || item.title || item.email || item.label}}</td>
               <td>
                 <button class="btn danger" (click)="remove(item)">Supprimer</button>
               </td>
