@@ -6,4 +6,6 @@
 // For immediate local testing point directly to the auth service (port 8000).
 // If you prefer the API Gateway route, change this to 'http://127.0.0.1:8002/api' once the
 // gateway is running and stable.
-export const BASE_API = 'http://127.0.0.1:8000/api';
+// During local development we run the auth service on 8001 in this workspace.
+// Change to http://127.0.0.1:8002/api if you want to route through the API gateway.
+export const BASE_API = 'http://127.0.0.1:8001/api';

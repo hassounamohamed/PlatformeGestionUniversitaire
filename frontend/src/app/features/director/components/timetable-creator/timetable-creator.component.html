@@ -1,7 +1,7 @@
 <div class="timetable-creator-root">
   <mat-card class="creator-shell">
     <mat-card-header>
-      <mat-card-title>Création d'Emploi du Temps</mat-card-title>
+      <mat-card-title>Création d'Emploi du Temps - Département Informatique</mat-card-title>
       <mat-card-subtitle>Glisser-déposer depuis la palette vers la grille</mat-card-subtitle>
     </mat-card-header>
 
@@ -10,23 +10,59 @@
         <aside class="palette">
           <h3>Palette</h3>
 
-          <mat-form-field appearance="outline" class="subject-input">
-            <input matInput placeholder="Nom de la matière" #subjectName>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="group-select">
-            <mat-select placeholder="Groupe" [(value)]="selectedGroupId">
-              <mat-option *ngFor="let g of groups" [value]="g.id">{{ g.name || g.id }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button mat-raised-button color="primary" (click)="addSubject(subjectName.value); subjectName.value=''">
-            <mat-icon>add</mat-icon> Ajouter
-          </button>
+          <div *ngIf="loading" class="loading-message">
+            <mat-spinner diameter="30"></mat-spinner>
+            <p>Chargement des données...</p>
+          </div>
 
-          <div class="palette-list" cdkDropList [cdkDropListData]="subjects" (cdkDropListDropped)="drop($event)">
-            <div class="palette-item" *ngFor="let s of subjects" cdkDrag>
+          <form [formGroup]="courseForm" (ngSubmit)="addCourse()" class="course-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Matière</mat-label>
+              <mat-select formControlName="matiere_nom">
+                <mat-option *ngFor="let m of matieres" [value]="m.nom">{{ m.nom }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Enseignant</mat-label>
+              <mat-select formControlName="enseignant_nom">
+                <mat-option *ngFor="let e of enseignants" [value]="e.full_name">{{ e.full_name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Groupe</mat-label>
+              <mat-select formControlName="groupe_nom">
+                <mat-option *ngFor="let g of groups" [value]="g">{{ g }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Salle</mat-label>
+              <mat-select formControlName="salle_numero">
+                <mat-option *ngFor="let s of salles" [value]="s.numero">{{ s.numero }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="submit" [disabled]="courseForm.invalid || loading">
+              <mat-icon>add</mat-icon> Ajouter
+            </button>
+          </form>
+
+          <div class="palette-list" 
+               cdkDropList 
+               [id]="paletteListId"
+               [cdkDropListData]="courses" 
+               [cdkDropListConnectedTo]="getConnectedLists()"
+               (cdkDropListDropped)="drop($event)">
+            <div class="palette-item" *ngFor="let c of courses" cdkDrag>
               <mat-icon>drag_indicator</mat-icon>
-              <span class="subj-name">{{ s.name }}</span>
-              <mat-chip *ngIf="s.groupId" class="small-chip">{{ s.groupId }}</mat-chip>
+              <div class="course-info">
+                <strong>{{ c.matiere_nom }}</strong>
+                <small>{{ c.enseignant_nom }}</small>
+                <mat-chip class="small-chip">{{ c.groupe_nom }}</mat-chip>
+                <mat-chip class="small-chip">Salle: {{ c.salle_numero }}</mat-chip>
+              </div>
             </div>
           </div>
         </aside>
@@ -40,10 +76,21 @@
           <div class="grid-body">
             <div *ngFor="let t of timeSlots; let ti = index" class="grid-row">
               <div class="time-cell">{{ t }}</div>
-              <div *ngFor="let d of daysOfWeek; let di = index" class="grid-cell" cdkDropList [cdkDropListData]="grid[di][ti]" (cdkDropListDropped)="drop($event, di, ti)">
+              <div *ngFor="let d of daysOfWeek; let di = index" 
+                   class="grid-cell" 
+                   cdkDropList 
+                   [id]="gridListIds[di][ti]"
+                   [cdkDropListData]="grid[di][ti]" 
+                   [cdkDropListConnectedTo]="getConnectedLists()"
+                   (cdkDropListDropped)="drop($event)">
                 <div class="cell-items">
-                  <div *ngFor="let it of grid[di][ti]; let i = index" class="cell-item">
-                    <div class="item-left"><mat-icon>class</mat-icon> {{ it.name }}</div>
+                  <div *ngFor="let course of grid[di][ti]; let i = index" class="cell-item" cdkDrag>
+                    <div class="item-content">
+                      <strong>{{ course.matiere_nom }}</strong>
+                      <small>{{ course.enseignant_nom }}</small>
+                      <span class="badge">{{ course.groupe_nom }}</span>
+                      <span class="badge">Salle: {{ course.salle_numero }}</span>
+                    </div>
                     <button mat-icon-button color="warn" (click)="removeFromCell(di, ti, i)"><mat-icon>delete</mat-icon></button>
                   </div>
                 </div>
@@ -52,7 +99,9 @@
           </div>
 
           <div class="creator-actions">
-            <button mat-raised-button color="primary" (click)="saveTimetable()"><mat-icon>save</mat-icon> Sauvegarder</button>
+            <button mat-raised-button color="primary" (click)="saveTimetable()">
+              <mat-icon>save</mat-icon> Sauvegarder dans la Base
+            </button>
           </div>
         </section>
       </div>

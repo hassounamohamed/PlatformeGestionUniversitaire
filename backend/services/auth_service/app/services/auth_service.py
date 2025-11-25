@@ -69,12 +69,19 @@ class AuthService:
         role = getattr(user_data, "role", "etudiant").lower()
         is_superuser = role == "admin"
 
+        # Normalize role to lowercase French labels used in DB (e.g. 'etudiant', 'enseignant')
+        role_value = getattr(user_data, "role", "etudiant")
+        if isinstance(role_value, str):
+            role_value = role_value.lower()
+
         db_user = User(
             email=user_data.email,
-            username=user_data.username,
+            username=getattr(user_data, "username", user_data.email.split('@')[0]),
             hashed_password=hashed_password,
-            full_name=user_data.full_name,
-            role=getattr(user_data, "role", "etudiant"),
+            full_name=getattr(user_data, "full_name", getattr(user_data, "name", None)),
+            role=role_value,
+            # For local development make new registrations active by default so login works immediately.
+            # In production change this to require admin approval.
             is_active=True,
             is_superuser=is_superuser
         )
@@ -113,6 +120,12 @@ class AuthService:
             # Log failed password attempt (do NOT log the provided password)
             self.logger.info("authenticate_user: invalid password for email=%s", email)
             return None
+
+        # If the account exists but is not active yet, return the user object so
+        # the API layer can return a specific message (account pending approval)
+        if not user.is_active:
+            self.logger.info("authenticate_user: account inactive for email=%s", email)
+            return user
 
         self.logger.info("authenticate_user: success for email=%s", email)
         return user

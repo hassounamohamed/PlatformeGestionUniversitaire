@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Date, Time, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Time, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -14,5 +14,9 @@ class EmploiTemps(Base):
     matiere_id = Column(Integer, nullable=True)
     groupe_id = Column(Integer, nullable=True)
     enseignant_id = Column(Integer, nullable=True)
+    # New text fields for display
+    matiere_nom = Column(String, nullable=True)
+    enseignant_nom = Column(String, nullable=True)
+    groupe_nom = Column(String, nullable=True)  # e.g., TI14, DSI21
 
     salle = relationship("Salle", backref="emploi_entries")

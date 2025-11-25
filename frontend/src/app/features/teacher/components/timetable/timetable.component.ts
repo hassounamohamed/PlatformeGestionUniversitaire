@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { AuthService } from '../../../../core/auth/services/auth.service';
+import { EmploiService } from '../../../../core/services/emploi.service';
 
 interface TimeSlot {
   start: string;
@@ -54,7 +56,7 @@ interface Makeup {
     MatTooltipModule
   ],
   templateUrl: './timetable.component.html',
-  styleUrl: './timetable.component.css'
+  styleUrls: ['./timetable.component.css']
 })
 export class TimetableComponent implements OnInit {
   selectedWeek = 'current';
@@ -88,93 +90,114 @@ export class TimetableComponent implements OnInit {
     { start: '14:30', end: '16:00' },
     { start: '16:10', end: '17:40' }
   ];
+  // courses will be loaded from the backend (DB). Remove hard-coded samples.
+  courses: Course[] = [];
 
-  courses: Course[] = [
-    {
-      id: '1',
-      subject: 'Mathématiques Appliquées',
-      group: 'L2 Info A',
-      room: '101',
-      type: 'lecture',
-      day: 'Lundi',
-      startTime: '08:30',
-      endTime: '10:00'
-    },
-    {
-      id: '2',
-      subject: 'Algorithmique',
-      group: 'L1 Info B',
-      room: '205',
-      type: 'td',
-      day: 'Lundi',
-      startTime: '10:10',
-      endTime: '11:40'
-    },
-    {
-      id: '3',
-      subject: 'Base de Données',
-      group: 'L2 Info A',
-      room: '103',
-      type: 'tp',
-      day: 'Mardi',
-      startTime: '14:30',
-      endTime: '16:00'
-    },
-    {
-      id: '4',
-      subject: 'Programmation Web',
-      group: 'L3 Info',
-      room: '201',
-      type: 'lecture',
-      day: 'Mercredi',
-      startTime: '08:30',
-      endTime: '10:00'
-    },
-    {
-      id: '5',
-      subject: 'Mathématiques Appliquées',
-      group: 'L2 Info B',
-      room: '102',
-      type: 'td',
-      day: 'Jeudi',
-      startTime: '10:10',
-      endTime: '11:40'
-    },
-    {
-      id: '6',
-      subject: 'Algorithmique',
-      group: 'L1 Info A',
-      room: '204',
-      type: 'tp',
-      day: 'Vendredi',
-      startTime: '16:10',
-      endTime: '17:40'
-    }
-  ];
-
+  // initial stats are zero until we load courses from backend
   weeklyStats: WeeklyStats = {
-    totalHours: 12,
-    totalCourses: 6,
-    uniqueGroups: 4
+    totalHours: 0,
+    totalCourses: 0,
+    uniqueGroups: 0
   };
 
-  upcomingMakeups: Makeup[] = [
-    {
-      subject: 'Base de Données',
-      date: new Date('2025-10-19'),
-      time: '14:30 - 16:00',
-      room: '103'
-    },
-    {
-      subject: 'Algorithmique',
-      date: new Date('2025-10-20'),
-      time: '10:10 - 11:40',
-      room: '205'
-    }
-  ];
+  // upcoming makeups come from backend when available
+  upcomingMakeups: Makeup[] = [];
 
+  constructor(private auth: AuthService, private emploiService: EmploiService) {}
   ngOnInit(): void {
     this.calculateWeeklyStats();
+
+    // 1) Prefer explicit current_user stored by the frontend (fast, works offline)
+    const stored = localStorage.getItem('current_user');
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+        this.loadEmploisForUser(u);
+        return;
+      } catch (e) {
+        console.warn('Invalid current_user in localStorage, will try token/Auth.me()', e);
+      }
+    }
+
+    // 2) Try to decode id from JWT token if present (fast fallback)
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const id = payload?.id || payload?.sub;
+        if (id) {
+          // If payload.sub contains email, id may be a string; try numeric cast
+          const numericId = Number(id) || undefined;
+          if (numericId) {
+            this.emploiService.getEmploisByEnseignant(numericId).subscribe({
+              next: (items: any[]) => {
+                this.courses = items.map(it => ({
+                  id: String(it.id),
+                  subject: it.matiere_nom || 'Cours',
+                  group: it.groupe_nom || (it.groupe_id ? String(it.groupe_id) : ''),
+                  room: it.salle && it.salle.numero ? String(it.salle.numero) : (it.salle_id ? String(it.salle_id) : ''),
+                  type: 'lecture',
+                  day: this.capitalize(new Date(it.date).toLocaleDateString('fr-FR', { weekday: 'long' })),
+                  startTime: (it.heure_debut || '').substring(0,5),
+                  endTime: (it.heure_fin || '').substring(0,5)
+                }));
+                this.calculateWeeklyStats();
+              },
+              error: (err) => console.error('Failed to load emplois by id from token', err)
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to decode token payload', e);
+      }
+    }
+
+    // 3) Last resort: ask auth service for /me, then fallback to localStorage
+    this.auth.me().subscribe({
+      next: (u: any) => this.loadEmploisForUser(u),
+      error: (err) => {
+        console.warn('Could not get current user via /me, falling back to localStorage', err);
+        try {
+          const raw = localStorage.getItem('current_user');
+          if (raw) {
+            const u = JSON.parse(raw);
+            this.loadEmploisForUser(u);
+            return;
+          }
+        } catch (e) {
+          console.warn('Failed to parse localStorage current_user', e);
+        }
+        // Nothing available — leave static data in place
+      }
+    });
+  }
+
+  private loadEmploisForUser(u: any) {
+    if (!u) return;
+    const id = u.id || (u && u.id);
+    if (!id) return;
+    this.emploiService.getEmploisByEnseignant(id).subscribe({
+      next: (items: any[]) => {
+        this.courses = items.map(it => ({
+          id: String(it.id),
+          subject: it.matiere_nom || 'Cours',
+          group: it.groupe_nom || (it.groupe_id ? String(it.groupe_id) : ''),
+          room: it.salle && it.salle.numero ? String(it.salle.numero) : (it.salle_id ? String(it.salle_id) : ''),
+          type: 'lecture',
+          day: this.capitalize(new Date(it.date).toLocaleDateString('fr-FR', { weekday: 'long' })),
+          startTime: (it.heure_debut || '').substring(0,5),
+          endTime: (it.heure_fin || '').substring(0,5)
+        }));
+        this.calculateWeeklyStats();
+      },
+      error: (err) => console.error('Failed to load emplois', err)
+    });
+  }
+
+  private capitalize(str: string) {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
   getCourse(day: string, startTime: string): Course | null {

@@ -9,25 +9,25 @@ export class AdminService {
   private mapResourceToPath(resource: string): string {
     switch (resource) {
       // When the API gateway is not running, call services directly by port.
-      // Referentiel (departements, enseignants, etudiants, matieres, salles) runs on 8001
+      // Referentiel service runs on 8003 in local dev (contains departements, enseignants, etudiants, matieres, salles)
       case 'departments':
-        return 'http://127.0.0.1:8001/departements';
+        return 'http://127.0.0.1:8003/departements';
       case 'teachers':
-        return 'http://127.0.0.1:8001/enseignants';
+        return 'http://127.0.0.1:8003/enseignants';
       case 'specialties':
-        return 'http://127.0.0.1:8001/specialites';
+        return 'http://127.0.0.1:8003/specialites';
       case 'students':
-        return 'http://127.0.0.1:8001/etudiants';
+        return 'http://127.0.0.1:8003/etudiants';
       case 'rooms':
-        return 'http://127.0.0.1:8001/salles';
+        return 'http://127.0.0.1:8003/salles';
       case 'subjects':
-        return 'http://127.0.0.1:8001/matieres';
+        return 'http://127.0.0.1:8003/matieres';
       // Events run on 8006
       case 'events':
         return 'http://127.0.0.1:8006/events';
-      // Emploi (timetable) on 8002
+      // Emploi (timetable) service runs on 8004 in local dev
       case 'emplois':
-        return 'http://127.0.0.1:8002/emplois';
+        return 'http://127.0.0.1:8004/emplois';
       // Analytics on 8005
       case 'analytics':
         return 'http://127.0.0.1:8005/analytics';
@@ -92,7 +92,7 @@ export class AdminService {
    */
   async registerAuth(payload: any): Promise<any | null> {
     // Auth service routes are mounted under /api/auth in the auth_service
-    const url = 'http://127.0.0.1:8000/api/auth/register';
+    const url = 'http://127.0.0.1:8001/api/auth/register';
     try {
       return await firstValueFrom(this.api.post<any>(url, payload));
     } catch (e) {

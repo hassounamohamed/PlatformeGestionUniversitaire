@@ -10,6 +10,9 @@ class EmploiTempsBase(BaseModel):
     matiere_id: int | None = None
     groupe_id: int | None = None
     enseignant_id: int | None = None
+    matiere_nom: str | None = None
+    enseignant_nom: str | None = None
+    groupe_nom: str | None = None
 
 
 class EmploiTempsCreate(EmploiTempsBase):

@@ -9,9 +9,6 @@ class Matiere(Base):
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String, index=True, nullable=False)
     code = Column(String, unique=True, index=True, nullable=True)
-    niveau_id = Column(Integer, nullable=True)
+    niveau_id = Column(Integer, ForeignKey("niveaux.id"), nullable=True)
     enseignant_id = Column(Integer, ForeignKey("enseignants.id"), nullable=True)
     departement_id = Column(Integer, ForeignKey("departements.id"), nullable=True)
-
-    enseignant = relationship("Enseignant", backref="matieres")
-    departement = relationship("Departement", backref="matieres")

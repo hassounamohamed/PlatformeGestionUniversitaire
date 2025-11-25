@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { User, UserRole, LoginRequest, RegisterRequest, AuthResponse } from '../../models/user.model';
@@ -21,6 +21,15 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {}
+
+  /**
+   * Récupère l'utilisateur courant depuis le backend en utilisant le token stocké
+   */
+  me() {
+    const token = this.getToken();
+    const headers = new HttpHeaders({ Authorization: token ? `Bearer ${token}` : '' });
+    return this.http.get<any>(`${this.API_URL}/me`, { headers });
+  }
 
   /**
    * Connexion de l'utilisateur (sans sélection de rôle)
@@ -55,7 +64,7 @@ export class AuthService {
     // Backend register endpoint returns the created user (UserResponse)
     return this.http.post<any>(`${this.API_URL}/register`, {
       ...data,
-      // role: 'student' // backend may assign default role; uncomment if backend expects role
+      // send the requested role (backend will normalize/override if needed)
     });
   }
 

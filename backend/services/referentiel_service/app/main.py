@@ -9,7 +9,7 @@ if SERVICE_ROOT not in sys.path:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import departement_routes, matiere_routes, enseignant_routes, etudiant_routes, salle_routes
+from app.routes import departement_routes, matiere_routes, enseignant_routes, etudiant_routes, salle_routes, setup_routes, niveau_routes, groupe_routes
 
 app = FastAPI(title="referentiel_service")
 
@@ -35,6 +35,9 @@ app.include_router(matiere_routes.router, prefix="/specialites", tags=["matieres
 app.include_router(enseignant_routes.router, prefix="/enseignants", tags=["enseignants"])
 app.include_router(etudiant_routes.router, prefix="/etudiants", tags=["etudiants"])
 app.include_router(salle_routes.router, prefix="/salles", tags=["salles"])
+app.include_router(niveau_routes.router, prefix="/niveaux", tags=["niveaux"])
+app.include_router(groupe_routes.router, prefix="/groupes", tags=["groupes"])
+app.include_router(setup_routes.router, prefix="/api", tags=["setup"])
 
 @app.get("/")
 async def root():

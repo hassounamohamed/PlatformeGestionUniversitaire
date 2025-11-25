@@ -35,9 +35,12 @@ export class RegisterComponent implements OnInit {
     
     this.registerForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+      role: ['etudiant', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6), this.passwordStrengthValidator]],
-      confirmPassword: ['', [Validators.required]]
+      confirmPassword: ['', [Validators.required]],
+      // Make the agreement checkbox optional so registration can proceed
+      agree: [false]
     }, {
       validators: this.passwordMatchValidator
     });
@@ -85,23 +88,25 @@ export class RegisterComponent implements OnInit {
       this.errorMessage = '';
 
       const registerData: RegisterRequest = {
-        name: this.registerForm.value.name,
+        full_name: this.registerForm.value.name,
         email: this.registerForm.value.email,
-        password: this.registerForm.value.password
-        // Note: Le rôle sera automatiquement 'student' pour l'auto-inscription
-        // Les autres rôles (teacher, admin, director) sont créés uniquement par l'admin
+        password: this.registerForm.value.password,
+        role: this.registerForm.value.role,
+        // Provide username: try explicit form value, else derive from email local-part
+        username: this.registerForm.value['username'] || (this.registerForm.value.email || '').split('@')[0]
       };
 
       this.authService.register(registerData).subscribe({
         next: (response) => {
-          // Succès - rediriger vers login
+          // Succès - montrer message d'attente d'approbation
+          // Redirect to login with a flag so login page can show info
           this.router.navigate(['/auth/login'], {
-            queryParams: { registered: 'true' }
+            queryParams: { registered: 'true', pending: 'true' }
           });
           this.isLoading = false;
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
+          this.errorMessage = error.error?.detail || error.error?.message || 'Registration failed. Please try again.';
           this.isLoading = false;
         }
       });
